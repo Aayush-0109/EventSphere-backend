@@ -14,11 +14,11 @@ const uploadOnCloudinary = async(path)=>{
             resource_type : "auto"
         }
        const result = await cloudinary.uploader.upload(path,options);
-       fs.unlinkSync(path);
+      await fs.unlinkSync(path);
        return result;
     } catch (error) {
         throw new ApiError(500,"Error in uploading image to cloudinary");
-        fs.unlinkSync(path);
+        await fs.unlinkSync(path);
     }
 }
 export {uploadOnCloudinary}

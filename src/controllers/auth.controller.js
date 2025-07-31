@@ -19,7 +19,6 @@ const generateToken = async (user) => {
             id: user.id,
             role: user.role
         }
-        console.log(process.env.JWT_REFRESH_SECRET)
         const refreshToken =  jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY   })
         const accessToken =  jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRY})
         return { accessToken, refreshToken }
