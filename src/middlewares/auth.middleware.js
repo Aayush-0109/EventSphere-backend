@@ -1,9 +1,10 @@
-import ApiError from "../utils/ApiError";
+import ApiError from "../utils/ApiError.js";
 import jwt from "jsonwebtoken";
-import prisma from "../config/prisma";
+import {prisma} from "../config/connectDB.js"
+import {asyncHandler} from "../utils/asyncHandler.js";
 
 const verifyToken = asyncHandler(async (req, _, next) => {
-    // Fix header case sensitivity issue
+   
     const authHeader = req.headers.authorization || req.headers.Authorization;
     const accessToken = req.cookies?.accessToken || authHeader?.split(" ")[1];
 
