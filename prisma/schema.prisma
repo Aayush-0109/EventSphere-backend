@@ -23,7 +23,7 @@ model User {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     events Event[] @relation("UserEvents")
-    
+      registrations registration[]
 }
 
 model Event {
@@ -36,5 +36,16 @@ model Event {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user User @relation("UserEvents", fields: [createdBy], references: [id])
+  registrations registration[]
+}
+model registration {
+  id Int @id @default(autoincrement())
+  userId Int
+  eventId Int
+  createdAt DateTime @default(now())
 
+  user User @relation(fields : [userId ], references: [id])
+  event Event @relation(fields : [eventId ], references: [id])
+
+  @@unique([userId, eventId]) 
 }

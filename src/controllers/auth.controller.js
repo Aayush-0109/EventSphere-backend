@@ -6,9 +6,16 @@ import jwt from "jsonwebtoken";
 import ApiResponse from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
+// cookie option
+const cookieOption = {
+    httpOnly: true,
+    secure: true,
+    maxAge: 24 * 60 * 60 * 1000
+}
+
 
 const generateToken = async (user) => {
-    
+
     try {
         const accessPayload = {
             id: user.id,
@@ -19,8 +26,8 @@ const generateToken = async (user) => {
             id: user.id,
             role: user.role
         }
-        const refreshToken =  jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY   })
-        const accessToken =  jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRY})
+        const refreshToken = jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY })
+        const accessToken = jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRY })
         return { accessToken, refreshToken }
     } catch (error) {
         console.log(error);
@@ -115,16 +122,12 @@ const loginUser = asyncHandler(async (req, res, next) => {
             }
         }
     )
-    // cookie
-    const cookieOption = {
-        httpOnly: true,
-        secure: true
-    }
-    res.cookie("refreshToken", refreshToken,cookieOption)
-    .cookie("accessToken",accessToken,cookieOption)
-    .status(200).json(
-        new ApiResponse(200, updatedUser, "User logged in successfully")
-    )
+   
+    res.cookie("refreshToken", refreshToken, cookieOption)
+        .cookie("accessToken", accessToken, cookieOption)
+        .status(200).json(
+            new ApiResponse(200, updatedUser, "User logged in successfully")
+        )
 
 
 
@@ -132,4 +135,23 @@ const loginUser = asyncHandler(async (req, res, next) => {
 
 }, "loginUser")
 
-export { registerUser,loginUser }
+const logOutUser = asyncHandler(async (req, res) => {
+
+    const user = req.user;
+    const updatedUser = await prisma.user.update({
+        where: {
+            id: user.id
+        },
+        data: {
+            refreshToken: null
+        }
+    })
+    if (!updatedUser) throw new ApiError(400, "Failed to logout user")
+    res.clearCookie("refreshToken",cookieOption)
+        .clearCookie("accessToken",cookieOption)
+        .status(200)
+        .json(new ApiResponse(200, {}, "User logged out successfully"))
+
+
+}, "Logout User")
+export { registerUser, loginUser, logOutUser }
