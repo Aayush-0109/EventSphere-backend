@@ -11,13 +11,17 @@ const storage = multer.diskStorage({
         cb(null,Date.now() + "-" + file.originalname);
     }
 })
-const fileFilter = (req,file,cb)=> {
-    const allowedTypes = ["image/png", "image/jpg", "image/jpeg"];
-    if(allowedTypes.includes(file.mimeType)){
-        return cb(null,true);
-    } else{
-        return(cb(new ApiError(400,"Invalid file type. Only PNG, JPG, and JPEG are allowed."),false));
-    }
-}
-export const upload = multer({storage, fileFilter});
- 
+// image
+const imageFileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/png", "image/jpg", "image/jpeg"];
+  if (allowedTypes.includes(file.mimetype)) cb(null, true);
+  else cb(new ApiError(400, "Invalid image type"), false);
+};
+export const imageUpload = multer({ storage, fileFilter: imageFileFilter });
+
+// pdf
+const pdfFileFilter = (req, file, cb) => {
+  if (file.mimetype === "application/pdf") cb(null, true);
+  else cb(new ApiError(400, "Invalid file type, only PDF allowed"), false);
+};
+export const pdfUpload = multer({ storage, fileFilter: pdfFileFilter ,limits: { fileSize: 2 * 1024 * 1024 }});

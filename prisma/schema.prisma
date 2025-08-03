@@ -25,6 +25,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   events        Event[]        @relation("UserEvents")
   registrations registration[]
+  organizerRequest organizerRequest? 
 }
 
 model Event {
@@ -33,7 +34,7 @@ model Event {
   description String
   date        DateTime
   location    String
-  images      Json?    
+  images      Json?
   createdBy   Int
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -53,4 +54,24 @@ model registration {
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
+}
+
+// organizer request
+
+enum status {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model organizerRequest {
+  id     Int @id @default(autoincrement())
+  userId Int @unique
+  status status @default(PENDING)
+  overview String?
+  resume Json?
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt 
+
+  user User @relation( fields : [userId] , references: [id] , onDelete: Cascade) 
 }
