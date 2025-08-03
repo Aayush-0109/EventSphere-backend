@@ -60,12 +60,20 @@ const registerUser = asyncHandler(async (req, res, next) => {
     // upload image to cloudinary
     const imagePath = req.file?.path;
     let profileImage = null;
+    console.log(imagePath);
     if (imagePath) {
-        const image = await uploadOnCloudinary(imagePath);
+        const image = await uploadOnCloudinary(imagePath, {
+            folder: "users",
+            resource_type: "image"
+        });
         if (!image) throw new ApiError(400, "Failed to upload image to cloudinary");
-        profileImage = image.url;
+        console.log(image)
+        profileImage = {
+            url: image.url,
+            publicId: image.public_id
+        }
     }
-
+    console.log(profileImage);
     // create user
     const user = await prisma.user.create({
         data: {
@@ -89,7 +97,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
             role: true
         }
     })
-
+    createdUser.profileImage = createdUser.profileImage?.url || null;
     res.status(201).json(
         new ApiResponse(201, createdUser, "User created successfully")
     )
@@ -122,7 +130,7 @@ const loginUser = asyncHandler(async (req, res, next) => {
             }
         }
     )
-   
+    updatedUser.profileImage = updatedUser.profileImage?.url || null;
     res.cookie("refreshToken", refreshToken, cookieOption)
         .cookie("accessToken", accessToken, cookieOption)
         .status(200).json(
@@ -147,11 +155,41 @@ const logOutUser = asyncHandler(async (req, res) => {
         }
     })
     if (!updatedUser) throw new ApiError(400, "Failed to logout user")
-    res.clearCookie("refreshToken",cookieOption)
-        .clearCookie("accessToken",cookieOption)
+    res.clearCookie("refreshToken", cookieOption)
+        .clearCookie("accessToken", cookieOption)
         .status(200)
         .json(new ApiResponse(200, {}, "User logged out successfully"))
 
 
 }, "Logout User")
-export { registerUser, loginUser, logOutUser }
+
+const updateUser = asyncHandler(async (req, res) => {
+    const user = req.user;
+    const { name, password } = req.body;
+    if (!name && !password) throw new ApiError(400, "One or more fields are required");
+    if (name == user.name && password == user.password) throw new ApiError(400, "No changes made");
+    const data = {
+        ...(name && { name }),
+        ...(password && {
+            password: bcrypt.hashSync(password.trim(), 10)
+        })
+    }
+    const updatedUser = await prisma.user.update({
+        where: {
+            id: user.id
+        },
+        data,
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            profileImage: true,
+            role: true
+        }
+    })
+    if (!updatedUser) throw new ApiError(400, "Failed to update user");
+    updatedUser.profileImage = updatedUser.profileImage?.url || null;
+    res.status(200).json(new ApiResponse(200, updatedUser, "User updated successfully"));
+
+}, "Update user")
+export { registerUser, loginUser, logOutUser, updateUser }

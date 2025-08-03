@@ -9,6 +9,7 @@ import {
 import { bookEvent, getEventBookings } from "../controllers/booking.controller.js";
 import authorizeRoles from "../middlewares/authorzeRoles.middleware.js";
 import verifyToken from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 const router = Router()
 router.get("/", getEvents);
 router.get("/:id", getEventById);
@@ -17,7 +18,7 @@ router.get("/:id", getEventById);
 
 
 
-router.post("/", verifyToken, authorizeRoles("ADMIN", "ORGANIZER"), createEvent);
+router.post("/", verifyToken, authorizeRoles("ADMIN", "ORGANIZER"),upload.array("images",10), createEvent);
 router.put("/:id", verifyToken, authorizeRoles("ADMIN", "ORGANIZER"), updateEvent);
 router.delete("/:id", verifyToken, authorizeRoles("ADMIN", "ORGANIZER"), deleteEvent);
 

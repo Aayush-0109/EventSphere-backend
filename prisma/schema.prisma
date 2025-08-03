@@ -6,6 +6,7 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 enum Role {
   USER
   ORGANIZER
@@ -13,39 +14,43 @@ enum Role {
 }
 
 model User {
-    id   Int @id @default(autoincrement())
-    name String
-    email String @unique
-    password String
-    role Role @default(USER)
-    profileImage String?
-    refreshToken String?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    events Event[] @relation("UserEvents")
-      registrations registration[]
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String         @unique
+  password      String
+  role          Role           @default(USER)
+  profileImage  Json?          @default("{}")
+  refreshToken  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  events        Event[]        @relation("UserEvents")
+  registrations registration[]
 }
 
 model Event {
-  id Int @id @unique @default(autoincrement())
-  title String
+  id          Int      @id @unique @default(autoincrement())
+  title       String
   description String
-  date DateTime
-  location String
-  createdBy Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user User @relation("UserEvents", fields: [createdBy], references: [id])
+  date        DateTime
+  location    String
+  images      Json?    
+  createdBy   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // relations
+  user          User           @relation("UserEvents", fields: [createdBy], references: [id], onDelete: Cascade)
   registrations registration[]
 }
+
 model registration {
-  id Int @id @default(autoincrement())
-  userId Int
-  eventId Int
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventId   Int
   createdAt DateTime @default(now())
 
-  user User @relation(fields : [userId ], references: [id])
-  event Event @relation(fields : [eventId ], references: [id])
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, eventId]) 
+  @@unique([userId, eventId])
 }
