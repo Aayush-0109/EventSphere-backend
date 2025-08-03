@@ -39,10 +39,11 @@ const generateToken = async (user) => {
 const registerUser = asyncHandler(async (req, res, next) => {
     // get data from body
     const { name, email, password } = req.body;
-    if (!name) throw new ApiError(400, "Name is required");
-    if (!email || !password) {
-        throw new ApiError(400, "Email and password are required");
-    }
+    
+    // if (!name) throw new ApiError(400, "Name is required");
+    // if (!email || !password) {
+    //     throw new ApiError(400, "Email and password are required");
+    // }
 
     // check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -106,7 +107,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
 const loginUser = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body;
-    if (!email || !password) throw new ApiError(400, "Email and password are required");
     const user = await prisma.user.findUnique({
         where: {
             email: email
@@ -166,7 +166,7 @@ const logOutUser = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
     const user = req.user;
     const { name, password } = req.body;
-    if (!name && !password) throw new ApiError(400, "One or more fields are required");
+    // if (!name && !password) throw new ApiError(400, "One or more fields are required");
     if (name == user.name && password == user.password) throw new ApiError(400, "No changes made");
     const data = {
         ...(name && { name }),

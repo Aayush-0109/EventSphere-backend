@@ -3,15 +3,11 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { prisma } from "../config/connectDB.js";
 import { getPagination, getMeta } from "../utils/pagination.js";
-import { uploadOnCloudinary , deleteFromCloudinary} from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 const createEvent = asyncHandler(async (req, res, _) => {
     const user = req.user
-    console.log(req.body)
     const { title, description, date, location } = req.body
-    if (!title || !description || !date || !location) {
-        throw new ApiError(400, "All fields are required")
-    }
     // images
     let imagePaths = []
     if (req.files) {
@@ -61,14 +57,9 @@ const createEvent = asyncHandler(async (req, res, _) => {
 }, "Create Event ")
 
 const getEvents = asyncHandler(async (req, res, _) => {
-    const { search, location, startDate, endDate } = req.query
-    const allowedSortFields = ["createdAt", "date", "title"];
-    const sortBy = allowedSortFields.includes(req.query.sortBy) ? req.query.sortBy : "createdAt";
-    const sortOrder = req.query.sortOrder === "asc" ? "asc" : "desc"
+    const { search, location, startDate, endDate, sortBy, sortOrder } = req.query
     // get pagination
-    const { page, limit, skip } = getPagination(req, 10)
-
-
+    const { page, limit, skip } = getPagination(req)
 
     const whereClause = {
         date: {
@@ -124,7 +115,6 @@ const getEvents = asyncHandler(async (req, res, _) => {
 
 const getEventById = asyncHandler(async (req, res, _) => {
     const id = Number(req.params.id)
-    if (isNaN(id)) throw new ApiError(400, "Event ID is invalid")
     const event = await prisma.event.findUnique({
         where: {
             id: id
@@ -148,14 +138,9 @@ const getEventById = asyncHandler(async (req, res, _) => {
 }, "Get Event By ID")
 
 const updateEvent = asyncHandler(async (req, res, _) => {
-    // id is required
     const id = Number(req.params.id)
-    if (isNaN(id)) throw new ApiError(400, "Event ID is invalid")
-
     // extract title, description, date, location from req.body
     const { title, description, date, location } = req.body
-    if (!title && !description && !date && !location) throw new ApiError(400, "At least one field (title, description, date, or location) must be provided")
-
     // create a data object to store the updated fields
     const data = {};
     if (title) data.title = title;
@@ -187,8 +172,6 @@ const updateEvent = asyncHandler(async (req, res, _) => {
 
 const deleteEvent = asyncHandler(async (req, res, _) => {
     const id = Number(req.params.id)
-    if (isNaN(id)) throw new ApiError(400, "Event ID is invalid")
-
     // find the event
     const event = await prisma.event.findUnique({ where: { id: id } });
     if (!event) throw new ApiError(404, "Event not found");

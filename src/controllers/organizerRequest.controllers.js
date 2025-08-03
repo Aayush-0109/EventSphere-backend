@@ -7,7 +7,6 @@ import { getMeta, getPagination } from "../utils/pagination.js"
 const createOrganizerRequest = asyncHandler(async (req, res) => {
     const user = req.user;
     const overview = req.body.overview;
-    if (!overview) throw new ApiError(400, "Request Overview Required")
     let resume = null
     if (req.file) {
         const uploadedResume = await uploadOnCloudinary(req.file.path, {
@@ -30,7 +29,7 @@ const createOrganizerRequest = asyncHandler(async (req, res) => {
     )
 
     if (existingRequest) {
-        throw new ApiError(400, "You have already apllied with request id " + existingRequest.id);
+        throw new ApiError(400, "You have already applied with request id " + existingRequest.id);
     }
     const createdRequest = await prisma.organizerRequest.create({
         data: {
@@ -58,7 +57,7 @@ const createOrganizerRequest = asyncHandler(async (req, res) => {
 
 const getOrganizerRequests = asyncHandler(async (req, res) => {
     const { page, limit, skip } = getPagination(req)
-    const sortOrder = req.query?.sortOrder === "asc" ? "asc" : "desc"
+    const sortOrder = req.query?.sortOrder
     const [requests, total] = await Promise.all([
         prisma.organizerRequest.findMany({
             include: {
@@ -89,8 +88,7 @@ const getOrganizerRequests = asyncHandler(async (req, res) => {
 
 const getOrganizerRequestsById = asyncHandler(async (req, res) => {
     const requestId = Number(req.params.id)
-    if (isNaN(requestId)) throw new ApiError(400, "Request id is Invalid")
-
+   
     const organizerRequest = await prisma.organizerRequest.findUnique({
         where: {
             id: requestId
@@ -118,11 +116,8 @@ const getOrganizerRequestsById = asyncHandler(async (req, res) => {
 
 const updateRequestStatus = asyncHandler(async (req, res) => {
     // validating request
-    const allowedStatus = ["PENDING", "ACCEPTED", "REJECTED"];
     const id = Number(req.params.id);
-    if(isNaN(id)) throw new ApiError(400, "invalid id ")
-    const status = req.body.status?.toUpperCase();
-    if (!allowedStatus.includes(status)) throw new ApiError(400, "Invalid status")
+    const status = req.body.status
     // extracting request and updating
     const existingRequest = await prisma.organizerRequest.findUnique({
         where: {

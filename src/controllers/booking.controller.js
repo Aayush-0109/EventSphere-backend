@@ -2,14 +2,12 @@ import { prisma } from "../config/connectDB.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import ApiError from "../utils/ApiError.js"
 import ApiResponse from "../utils/ApiResponse.js"
+import { getPagination, getMeta } from "../utils/pagination.js"
 const bookEvent = asyncHandler(async (req, res) => {
     //get the event id from the request
-    const eventId = Number(req.params.eventId);
+    const eventId = Number(req.params.id);
     const user = req.user
 
-    if (isNaN(eventId)) {
-        throw new ApiError(400, "Invalid Event ID")
-    }
 
     // check if the event exists
     const event = await prisma.event.findUnique({
@@ -69,39 +67,41 @@ const bookEvent = asyncHandler(async (req, res) => {
     res.status(201).json(new ApiResponse(201, newregistration, "Registration created successfully"))
 }, "Register for Event")
 const getBookingById = asyncHandler(async (req, res) => {
-    const bookingId = Number(req.params.bookingId);
-    if(isNaN(bookingId)) throw new ApiError(400, "Invalid Booking ID")
-        const booking = await prisma.registration.findUnique({
-     where:{
-        id : bookingId
-     },
-     include: {
-        user : {
-            select : {
-                name : true,
-                email : true,
-                profileImage : true
-            }
-        },  
-        event : {
-            select : {
-                title : true,
-                date : true,
-                location : true,
-                description : true
+    const bookingId = Number(req.params.id);
+    // if (isNaN(bookingId)) throw new ApiError(400, "Invalid Booking ID")
+    const booking = await prisma.registration.findUnique({
+        where: {
+            id: bookingId
+        },
+        include: {
+            user: {
+                select: {
+                    name: true,
+                    email: true,
+                    profileImage: true
+                }
+            },
+            event: {
+                select: {
+                    title: true,
+                    date: true,
+                    location: true,
+                    description: true
+                }
             }
         }
-     }
-        })
-        if(!booking) throw new ApiError(404, "Booking not found")
-        res.status(200).json(new ApiResponse(200, booking, "Booking fetched successfully"))
-},"Get Booking By Id")
+    })
+    if (!booking) throw new ApiError(404, "Booking not found")
+    res.status(200).json(new ApiResponse(200, booking, "Booking fetched successfully"))
+}, "Get Booking By Id")
 const getEventBookings = asyncHandler(async (req, res) => {
-    const eventId = Number(req.params.eventId)
-    if (isNaN(eventId)) throw new ApiError(400, "Invalid Event ID")
-    const registrations = await prisma.registration.findMany({
+    const id = Number(req.params.id)
+    // if (isNaN(id)) throw new ApiError(400, "Invalid Event ID")
+    const { page, limit, skip } = getPagination(req)
+    const { sortOrder } = req.query
+    const [registrations, total] = await Promise.all([prisma.registration.findMany({
         where: {
-            eventId: eventId
+            eventId: id
         },
         include: {
             user: {
@@ -111,35 +111,66 @@ const getEventBookings = asyncHandler(async (req, res) => {
                     profileImage: true
                 }
             }
+        },
+        skip,
+        take : limit,
+        orderBy :{
+            createdAt : sortOrder
         }
-    })
-    res.status(200).json(new ApiResponse(200, registrations, "Bookings fetched successfully"))
+    }), prisma.registration.count({
+        where: {
+            eventId: id
+        },
+    })])
+    res.status(200).json(new ApiResponse(200, {
+        registrations,
+        meta: getMeta(total, page, limit)
+    }, "Bookings fetched successfully"))
 
 }, "Get bookings for an event")
 
 const getUserBookings = asyncHandler(async (req, res) => {
     const user = req.user;
-    const registrations = await prisma.registration.findMany({
-        where: {
-            userId: user.id
-        },
-        include: {
-            event: {
-                select: {
-                    title: true,
-                    date: true,
-                    location: true,         
-                    description: true
+    const { page, limit, skip } = getPagination(req)
+    const { sortOrder } = req.query
+    const [registrations, total] = await Promise.all([
+        prisma.registration.findMany({
+            where: {
+                userId: user.id
+            },
+            include: {
+                event: {
+                    select: {
+                        title: true,
+                        date: true,
+                        location: true,
+                        description: true
+                    }
                 }
+            },
+            skip,
+            take: limit,
+            orderBy: {
+                createdAt: sortOrder
             }
-        }
-    })
-    res.status(200).json(new ApiResponse(200, registrations, "Bookings fetched successfully"))
+
+        }),
+        prisma.registration.count({
+            where: {
+                userId: user.id
+            }
+        })
+    ])
+    res.status(200).json(new ApiResponse(200, {
+        registrations,
+        meta: getMeta(total, page, limit)
+
+    }, "Bookings fetched successfully"))
 }, "Get bookings for a user")
 
 const cancelBooking = asyncHandler(async (req, res) => {
-    const bookingId = Number(req.params.bookingId)
-    if (isNaN(bookingId)) throw new ApiError(400, "Invalid Booking ID")
+    const bookingId = Number(req.params.id)
+    // if (isNaN(bookingId)) throw new ApiError(400, "Invalid Booking ID")
     const user = req.user;
     const booking = await prisma.registration.findUnique({
         where: {
