@@ -21,7 +21,7 @@ const uploadOnCloudinary = async (path, options) => {
         throw new ApiError(500, "Error in uploading image to cloudinary");
     }
     finally {
-        await fs.unlinkSync(path);
+         fs.unlinkSync(path);
     }
 }
 

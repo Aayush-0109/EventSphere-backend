@@ -1,5 +1,5 @@
-import { idSchema ,paginationSchema} from "./common.schemas.js";
-import {z }from "zod";
+import { idSchema, paginationSchema } from "./common.schemas.js";
+import { z } from "zod";
 
 const createEventSchema = z.object({
     title: z.string()
@@ -11,7 +11,7 @@ const createEventSchema = z.object({
         .max(1000, "description cannot exceed 1000 characters")
         .trim(),
     date: z
-        .datetime("Invalid date format , use ISO string")
+        .string().datetime("Invalid date format , use ISO string")
         .transform(date => new Date(date))
         .refine(date => date > new Date(), "Event date must be in future"),
     location: z.string()
@@ -32,7 +32,7 @@ const updateEventSchema = z.object({
         .trim()
         .optional(),
     date: z
-        .datetime("Invalid date format , use ISO string")
+        .string().datetime("Invalid date format , use ISO string")
         .transform(date => new Date(date))
         .refine(date => date > new Date(), "Event date must be in future")
         .optional(),
@@ -49,16 +49,16 @@ const eventParamsSchema = z.object({
 const getEventsQuerySchema = z.object({
     search: z.string().optional(),
     location: z.string().optional(),
-    startDate: z.datetime().optional(),
-    endDate: z.datetime.optional(),
+    startDate: z.string().datetime("Invalid date format , use ISO string").optional(),
+    endDate: z.string().datetime("Invalid date format , use ISO string").optional(),
     sortOrder: z.enum(["asc", "desc"])
-        .default("desc")
         .catch("desc")
-        .optional(),
+        .optional()
+        .default("desc"),
     sortBy: z.enum(["createdAt", "date", "title"])
         .default("createdAt")
         .catch("createdAt")
         .optional(),
-        ...paginationSchema.shape
+    ...paginationSchema.shape
 })
-export{getEventsQuerySchema,eventParamsSchema,updateEventSchema,createEventSchema}
+export { getEventsQuerySchema, eventParamsSchema, updateEventSchema, createEventSchema }

@@ -9,15 +9,14 @@ const passwordSchema = z.string()
     .regex(/[0-9]/, "Password must contain at least one number");
 
 const idSchema = z.string()
-    .transform(Number).positive("Id must be positive number")
+    .transform(Number).refine((val) => val > 0, { message: "Id must be positive number" });
 
 const paginationSchema = z.object({
     page: z.string()
         .optional()
         .default("1")
         .catch("1")
-        .transform(Number)
-        .min(1, "Page must be positive"),
+        .transform(Number),
     limit: z.string()
         .optional()
         .default("10")

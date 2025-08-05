@@ -4,9 +4,10 @@ import { registerUser,loginUser , logOutUser, updateUser} from "../controllers/a
 import verifyToken from "../middlewares/auth.middleware.js";
 import { validateBody } from "../middlewares/validation.middleware.js";
 import {registerUserSchema,loginUserSchema,updateUserSchema} from "../schemas/auth.schemas.js"
+import { strictRateLimit  } from "../middlewares/rateLimiting-middleware.js";
 const router = Router();
-router.post("/register", imageUpload.single("profileImage"),validateBody(registerUserSchema),registerUser)
-router.post("/login",validateBody(loginUserSchema),loginUser)
-router.post("/logout",verifyToken,logOutUser)
-router.put("/update",verifyToken,validateBody(updateUserSchema),updateUser)
+router.post("/register",strictRateLimit, imageUpload.single("profileImage"),validateBody(registerUserSchema),registerUser)
+router.post("/login",strictRateLimit,validateBody(loginUserSchema),loginUser)
+router.post("/logout",verifyToken,strictRateLimit,logOutUser)
+router.put("/update",verifyToken,strictRateLimit,validateBody(updateUserSchema),updateUser)
 export default router;
