@@ -1,8 +1,8 @@
 
 
 const getPagination = (req) => {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 10
+    const page = Number(req.validatedQuery.page) 
+    const limit = Number(req.validatedQuery.limit) 
     const skip = (page - 1) * limit
 
     return {

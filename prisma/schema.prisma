@@ -14,18 +14,18 @@ enum Role {
 }
 
 model User {
-  id            Int            @id @default(autoincrement())
-  name          String
-  email         String         @unique
-  password      String
-  role          Role           @default(USER)
-  profileImage  Json?          @default("{}")
-  refreshToken  String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  events        Event[]        @relation("UserEvents")
-  registrations registration[]
-  organizerRequest organizerRequest? 
+  id               Int               @id @default(autoincrement())
+  name             String
+  email            String            @unique
+  password         String
+  role             Role              @default(USER)
+  profileImage     Json?             @default("{}")
+  refreshToken     String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  events           Event[]           @relation("UserEvents")
+  registrations    registration[]
+  organizerRequest organizerRequest?
 }
 
 model Event {
@@ -33,15 +33,31 @@ model Event {
   title       String
   description String
   date        DateTime
-  location    String
   images      Json?
-  createdBy   Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // geospatial
+  longitude   Float
+  latitude    Float
+  // address
+  address     String
+  city        String
+  state       String
+  country     String
+  postalCode  String
+
+  createdBy Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // relations
   user          User           @relation("UserEvents", fields: [createdBy], references: [id], onDelete: Cascade)
   registrations registration[]
+
+  // indexing
+  @@index([latitude, longitude], name: "location_idx")
+  @@index([city], name: "city_idx")
+  @@index([state], name: "state_idx")
+  @@index([country], name:"country_idx")
+  @@index([postalCode], name: "postalCode_idx")
 }
 
 model registration {
@@ -65,13 +81,13 @@ enum status {
 }
 
 model organizerRequest {
-  id     Int @id @default(autoincrement())
-  userId Int @unique
-  status status @default(PENDING)
-  overview String?
-  resume Json?
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  status    status   @default(PENDING)
+  overview  String?
+  resume    Json?
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt 
+  updateAt  DateTime @updatedAt
 
-  user User @relation( fields : [userId] , references: [id] , onDelete: Cascade) 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

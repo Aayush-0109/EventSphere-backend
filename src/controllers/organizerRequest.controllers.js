@@ -57,7 +57,7 @@ const createOrganizerRequest = asyncHandler(async (req, res) => {
 
 const getOrganizerRequests = asyncHandler(async (req, res) => {
     const { page, limit, skip } = getPagination(req)
-    const sortOrder = req.query?.sortOrder
+    const sortOrder = req.validatedQuery?.sortOrder
     const [requests, total] = await Promise.all([
         prisma.organizerRequest.findMany({
             include: {

@@ -1,5 +1,5 @@
 import { idSchema, paginationSchema } from "./common.schemas.js";
-import { z } from "zod";
+import {  z } from "zod";
 
 const createEventSchema = z.object({
     title: z.string()
@@ -14,10 +14,18 @@ const createEventSchema = z.object({
         .string().datetime("Invalid date format , use ISO string")
         .transform(date => new Date(date))
         .refine(date => date > new Date(), "Event date must be in future"),
-    location: z.string()
-        .min(3, "Location must have atleast 3 characters")
-        .max(200, "Location cannot exceed 200 characters")
-        .trim()
+    longitude: z.number()
+        .min(-180, "invalid longitude")
+        .max(180, "invalid longitude"),
+    latitude: z.number()
+        .min(-85.05112878, "invalid latitude")
+        .max(+85.05112878, "invalid latitude"),
+
+    address: z.string().min(5, "Complete address is required"),
+    city: z.string().min(2, "City is required"),
+    state: z.string().min(2, "State/Province is required"),
+    country: z.string().min(2, "Country is required"),
+    postalCode: z.string().min(3, "Postal code is required"),
 })
 
 const updateEventSchema = z.object({
@@ -36,12 +44,32 @@ const updateEventSchema = z.object({
         .transform(date => new Date(date))
         .refine(date => date > new Date(), "Event date must be in future")
         .optional(),
-    location: z.string()
-        .min(3, "Location must have atleast 3 characters")
-        .max(200, "Location cannot exceed 200 characters")
-        .trim()
-        .optional()
-}).refine(data => data.title || data.description || data.date || data.location, "Atleast one field must be provided")
+    longitude: z.number()
+        .min(-180, "invalid longitude")
+        .max(180, "invalid longitude")
+        .optional(),
+    latitude: z.number()
+        .min(-85.05112878, "invalid latitude")
+        .max(85.05112878, "invalid latitude")
+        .optional(),
+    address: z.string().min(5).optional(),
+    city: z.string().min(2).optional(),
+    state: z.string().min(2).optional(),
+    country: z.string().min(2).optional(),
+    postalCode: z.string().min(6).max(6).optional(),
+}).refine(data => {
+    const fields = [data.address, data.city, data.state, data.country, data.postalCode]
+    const hasAnyAddressField = fields.some((field) => field !== undefined);
+    const hasAllAddressFields = fields.every((field) => field !== undefined);
+
+    const hasAnyGeoField = data.longitude || data.latitude
+    const hasAllGeoFields = data.longitude && data.latitude
+    if (hasAnyAddressField && !hasAllAddressFields) {
+        return false;
+    }
+    if (hasAnyGeoField && !hasAllGeoFields) return false;
+    if (data.title || data.description || data.date) return true;
+}, "Atleast one field must be provided or If updating location, all address fields must be provided together")
 
 const eventParamsSchema = z.object({
     id: idSchema
@@ -61,4 +89,12 @@ const getEventsQuerySchema = z.object({
         .optional(),
     ...paginationSchema.shape
 })
-export { getEventsQuerySchema, eventParamsSchema, updateEventSchema, createEventSchema }
+
+const geoSearchSchema = z.object({
+    longitude: z.number().min(-180).max(180),
+    latitude: z.number().min(-85.05112878).max(85.05112878),
+    radius: z.number().min(0.1).max(100).default(10),
+    unit: z.enum(["km", "miles"]).default("km"),
+    ...paginationSchema
+})
+export { getEventsQuerySchema, eventParamsSchema, updateEventSchema, createEventSchema, geoSearchSchema }

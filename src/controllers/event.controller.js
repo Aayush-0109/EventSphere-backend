@@ -4,10 +4,14 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { prisma } from "../config/connectDB.js";
 import { getPagination, getMeta } from "../utils/pagination.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
-
+import cache from "../utils/cache.js";
+import geo from "../utils/geoService.js";
+import { id } from "zod/locales";
+import { includes } from "zod";
 const createEvent = asyncHandler(async (req, res, _) => {
     const user = req.user
-    const { title, description, date, location } = req.body
+    const { title, description, date, address, city, state, country, postalCode, longitude, latitude } = req.body
+
     // images
     let imagePaths = []
     if (req.files) {
@@ -32,14 +36,22 @@ const createEvent = asyncHandler(async (req, res, _) => {
             title,
             description,
             date: new Date(date),
-            location,
+            address,
+            city,
+            state,
+            country,
+            postalCode,
+            longitude,
+            latitude,
             images: imageUrls,
             createdBy: user.id
         }
     })
+
     if (!event) {
         throw new ApiError(400, "Failed to create event")
     }
+    await geo.addEvent(event.id, longitude, latitude)
     event.images = event.images?.map((image) => {
         return image.url
 
@@ -51,13 +63,17 @@ const createEvent = asyncHandler(async (req, res, _) => {
             name: user.name
         }
     }
+    await geo.removePattern("NearbyFrom:*")
+    await cache.del('GET:/api/v1/events/');
+    await cache.delPattern('GET:/api/v1/events/?*')
     return res.status(201).json(
         new ApiResponse(201, eventData, "Event created successfully")
     )
 }, "Create Event ")
 
 const getEvents = asyncHandler(async (req, res, _) => {
-    const { search, location, startDate, endDate, sortBy, sortOrder } = req.query
+
+    const { search, location, startDate, endDate, sortBy, sortOrder } = req.validatedQuery ? req.validatedQuery : {}
     // get pagination
     const { page, limit, skip } = getPagination(req)
 
@@ -74,8 +90,17 @@ const getEvents = asyncHandler(async (req, res, _) => {
             ]
         }),
         ...(location && {
-            location: { contains: location, mode: "insensitive" }
-        })
+            OR: [
+                { address: { contains: location, mode: "insensitive" } },
+                { city: { contains: location, mode: "insensitive" } },
+                { state: { contains: location, mode: "insensitive" } },
+                { country: { contains: location, mode: "insensitive" } },
+            ]
+        }),
+
+
+
+
     }
 
     const [events, total] = await Promise.all([
@@ -113,6 +138,44 @@ const getEvents = asyncHandler(async (req, res, _) => {
 
 }, "Get Events")
 
+const getNearbyEvents = asyncHandler(async (req, res) => {
+    const { page, limit, skip } = getPagination(req);
+    const { longitude, latitude, radius, unit } = req.validatedQuery;
+    const { geoEvents, total } = await geo.getNearbyEvents(longitude, latitude, radius, unit);
+    const paginatedGeoEvents = geoEvents.slice(skip,skip+limit);
+    const eventIds = paginatedGeoEvents.map((geoEvent)=>(Number(geoEvent[0])))
+  const eventsFromDB = await prisma.event.findMany({
+    where:{
+        id : {
+            in : eventIds
+        }
+    },
+    include: {
+        user: {
+            select: {
+                id: true,
+                name: true,
+                profileImage: true,
+            }
+        }
+    }
+  })
+    const eventMap = new Map(eventsFromDB.map(e => [e.id , e]));
+    const events = paginatedGeoEvents.map(geoEvent => {
+        const event = eventMap.get(Number(geoEvent[0]));
+        if (event) {
+            event.images = event.images? event.images[0]?.url : null;
+            event.distance = parseFloat(geoEvent[1]); // Add distance info
+        }
+        return event;
+    }).filter(event => event !== null);
+    return res.status(200).json(new ApiResponse(200,{
+        events,
+        meta : getMeta(total,page,limit)
+    },"Events fetched successfully"))
+
+}, "get nearby events")
+
 const getEventById = asyncHandler(async (req, res, _) => {
     const id = Number(req.params.id)
     const event = await prisma.event.findUnique({
@@ -140,13 +203,23 @@ const getEventById = asyncHandler(async (req, res, _) => {
 const updateEvent = asyncHandler(async (req, res, _) => {
     const id = Number(req.params.id)
     // extract title, description, date, location from req.body
-    const { title, description, date, location } = req.body
+    const { title, description, date, address, city, state, country, postalCode, longitude, latitude } = req.body
     // create a data object to store the updated fields
     const data = {};
     if (title) data.title = title;
     if (description) data.description = description;
     if (date) data.date = new Date(date);
-    if (location) data.location = location;
+    if (address) {
+        data.address = address,
+            data.city = city,
+            data.state = state,
+            data.country = country,
+            data.postalCode = postalCode
+    }
+    if (longitude) {
+        data.longitude = longitude,
+            data.latitude = latitude
+    }
 
     const event = await prisma.event.findUnique({ where: { id: id } });
     if (!event) throw new ApiError(404, "Event not found");
@@ -155,6 +228,7 @@ const updateEvent = asyncHandler(async (req, res, _) => {
     if (event.createdBy !== req.user.id && req.user.role !== "ADMIN") {
         throw new ApiError(403, "Not authorized to modify this event");
     }
+
     // update the event
     const updatedEvent = await prisma.event.update({
         where: {
@@ -163,6 +237,13 @@ const updateEvent = asyncHandler(async (req, res, _) => {
         data,
         include: { user: { select: { id: true, name: true } } }
     })
+    if (longitude) await geo.updateEvent(id, longitude, latitude);
+    // cache invalidation
+    await geo.removePattern("NearbyFrom:*")
+    await cache.del('GET:/api/v1/events');
+    await cache.delPattern('GET:/api/v1/events?*')
+    await cache.del(`GET:/api/v1/events/${id}`)
+    //  cache.del('GET:/api/')
     return res.status(200).json(
         new ApiResponse(200, updatedEvent, "Event updated successfully")
     )
@@ -191,8 +272,15 @@ const deleteEvent = asyncHandler(async (req, res, _) => {
         return deleteFromCloudinary(image.publicId)
     }))
 
+    // cache invalidation
+    await geo.removeEvent(id)
+    await geo.removePattern("NearbyFrom:*")
+    await cache.del('GET:/api/v1/events');
+    await cache.delPattern('GET:/api/v1/events?*')
+    await cache.del(`GET:/api/v1/events/${id}`)
+
     return res.status(200).json(
         new ApiResponse(200, {}, "Event deleted successfully")
     )
 }, " Delete Event")
-export { createEvent, getEvents, getEventById, updateEvent, deleteEvent }
+export { createEvent, getEvents,getNearbyEvents, getEventById, updateEvent, deleteEvent }

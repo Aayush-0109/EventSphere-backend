@@ -98,7 +98,7 @@ const getEventBookings = asyncHandler(async (req, res) => {
     const id = Number(req.params.id)
     // if (isNaN(id)) throw new ApiError(400, "Invalid Event ID")
     const { page, limit, skip } = getPagination(req)
-    const { sortOrder } = req.query
+    const { sortOrder } = req.validatedQuery ? req.validatedQuery :{}
     const [registrations, total] = await Promise.all([prisma.registration.findMany({
         where: {
             eventId: id
@@ -132,7 +132,7 @@ const getEventBookings = asyncHandler(async (req, res) => {
 const getUserBookings = asyncHandler(async (req, res) => {
     const user = req.user;
     const { page, limit, skip } = getPagination(req)
-    const { sortOrder } = req.query
+    const { sortOrder } = req.validatedQuery ? req.validatedQuery : {}
     const [registrations, total] = await Promise.all([
         prisma.registration.findMany({
             where: {
