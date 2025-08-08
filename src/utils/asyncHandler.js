@@ -4,7 +4,7 @@ import ApiError from "./ApiError.js";
     Promise.resolve(fn(req, res, next))
         .catch(
             (err)=>{
-                next(new ApiError(500, `Error in ${route} : ${err.message}`))
+                next(new ApiError(err.statuscode || 500, `Error in ${route} : ${err.message}`))
             }
         );
 }

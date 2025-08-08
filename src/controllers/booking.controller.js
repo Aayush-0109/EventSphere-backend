@@ -13,6 +13,8 @@ const bookEvent = asyncHandler(async (req, res) => {
     const event = await prisma.event.findUnique({
         where: {
             id: eventId
+      
+       
         }
     })
     if (!event) {

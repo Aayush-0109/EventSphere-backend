@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import ApiResponse from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { email } from "zod";
 
 // cookie option
 const cookieOption = {
@@ -39,7 +40,7 @@ const generateToken = async (user) => {
 const registerUser = asyncHandler(async (req, res, next) => {
     // get data from body
     const { name, email, password } = req.body;
-    
+
     // if (!name) throw new ApiError(400, "Name is required");
     // if (!email || !password) {
     //     throw new ApiError(400, "Email and password are required");
@@ -112,8 +113,8 @@ const loginUser = asyncHandler(async (req, res, next) => {
             email: email
         }
     })
-    if (!user) throw new ApiError(400, "User not found");
-    if (!bcrypt.compareSync(password.trim(), user.password)) throw new ApiError(400, "Invalid password");
+    if (!user) throw new ApiError(404, "User not found");
+    if (!bcrypt.compareSync(password.trim(), user.password)) throw new ApiError(401, "Invalid password");
     const { accessToken, refreshToken } = await generateToken(user);
     const updatedUser = await prisma.user.update(
         {
@@ -142,6 +143,77 @@ const loginUser = asyncHandler(async (req, res, next) => {
 
 
 }, "loginUser")
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    const incomingRefreshToken = req.cookies?.refreshAccessToken || authHeader?.split(" ")[1];
+    if (!incomingRefreshToken) throw new ApiError(400, "Access token required")
+
+    const payload = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const id = payload.id;
+
+    const user = prisma.user.findUnique({
+        where: {
+            id,
+        },
+        select: {
+            name: true,
+            email: true,
+            role: true,
+            refreshToken: true,
+        }
+    })
+    if (!user) throw new ApiError(404
+        , "Invalid request : No user found");
+    if (user.refreshToken !== incomingRefreshToken) throw new ApiError(400, "Unauthorized request ");
+    const accessPayload = {
+        id: user.id,
+        role: user.role,
+        name: user.name
+    }
+    const refreshPayload = {
+        id: user.id,
+        role: user.role
+    }
+    const refreshToken = jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY })
+    const accessToken = jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRY })
+
+    const updatedUser = prisma.user.update({
+        where: {
+            id
+        },
+        data: {
+            refreshToken
+        },
+        select: {
+            name: true,
+            email: true,
+            role: true
+        }
+    })
+
+    res.status(200).cookie("refreshToken", refreshToken, cookieOption).cookie("accessToken", accessToken, cookieOption).json(new ApiResponse(200, updatedUser, "Access token refreshed successfully"))
+
+}, "refresh access token")
+
+const getUser = asyncHandler(async(req,res)=>{
+    const user = await prisma.user.findUnique({
+        where:{
+            id : req.user.id
+        },
+        select:{
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            profileImage: true,
+            createdAt: true,
+            updatedAt: true
+        }
+    })
+    user.profileImage = user.profileImage?.url
+    res.status(200).json(new ApiResponse(200,user,"user fetched successfully"))
+},"Get user info")
 
 const logOutUser = asyncHandler(async (req, res) => {
 
@@ -192,4 +264,4 @@ const updateUser = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, updatedUser, "User updated successfully"));
 
 }, "Update user")
-export { registerUser, loginUser, logOutUser, updateUser }
+export { registerUser, loginUser,getUser, logOutUser, updateUser, refreshAccessToken }

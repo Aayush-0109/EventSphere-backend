@@ -9,12 +9,17 @@ import { notfound, errorHandler } from "./middlewares/error.middleware.js";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(cookieParser());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/events", eventRoutes);
 app.use("/api/v1/bookings", eventBookingRoutes);
-app.use("/api/v1/organizer-request",organizerRequestRoutes)
+app.use("/api/v1/organizer-request", organizerRequestRoutes)
 app.use(notfound);
 app.use(errorHandler);
 
