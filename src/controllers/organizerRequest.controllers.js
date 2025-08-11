@@ -29,7 +29,7 @@ const createOrganizerRequest = asyncHandler(async (req, res) => {
     )
 
     if (existingRequest) {
-        throw new ApiError(400, "You have already applied with request id " + existingRequest.id);
+        throw new ApiError(409, "You have already applied with request id " + existingRequest.id);
     }
     const createdRequest = await prisma.organizerRequest.create({
         data: {
@@ -125,7 +125,7 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
         }
     })
     if (!existingRequest) throw new ApiError(404, "Organizer request not found")
-    if (status === existingRequest.status) throw new ApiError(400, "Invalid status : same as before")
+    if (status === existingRequest.status) throw new ApiError(409, "Invalid status : same as before")
       const response = await prisma.$transaction(async (tx)=>{
         const updatedRequest = await tx.organizerRequest.update({
         where: {

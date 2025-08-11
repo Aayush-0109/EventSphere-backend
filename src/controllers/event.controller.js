@@ -49,7 +49,7 @@ const createEvent = asyncHandler(async (req, res, _) => {
     })
 
     if (!event) {
-        throw new ApiError(400, "Failed to create event")
+        throw new ApiError(500, "Failed to create event")
     }
     await geo.addEvent(event.id, longitude, latitude)
     event.images = event.images?.map((image) => {

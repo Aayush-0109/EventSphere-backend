@@ -11,7 +11,8 @@ import { email } from "zod";
 const cookieOption = {
     httpOnly: true,
     secure: true,
-    maxAge: 24 * 60 * 60 * 1000
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite : 'strict'
 }
 
 
@@ -53,7 +54,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
         }
     })
     if (existingUser) {
-        throw new ApiError(400, "User already exists");
+        throw new ApiError(409, "User already exists");
     }
 
     // hash password
@@ -68,7 +69,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
             folder: "users",
             resource_type: "image"
         });
-        if (!image) throw new ApiError(400, "Failed to upload image to cloudinary");
+        if (!image) throw new ApiError(500, "Failed to upload image to cloudinary");
         console.log(image)
         profileImage = {
             url: image.url,
@@ -86,7 +87,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
         }
     })
-    if (!user) throw new ApiError(400, "Failed to create user");
+    if (!user) throw new ApiError(500, "Failed to create user");
     const createdUser = await prisma.user.findUnique({
         where: {
             id: user.id
@@ -142,21 +143,20 @@ const loginUser = asyncHandler(async (req, res, next) => {
 
 
 
-}, "loginUser")
+}, "login User")
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const authHeader = req.headers.authorization || req.headers.Authorization;
-    const incomingRefreshToken = req.cookies?.refreshAccessToken || authHeader?.split(" ")[1];
+    
+    const incomingRefreshToken = req.cookies?.refreshToken 
     if (!incomingRefreshToken) throw new ApiError(400, "Access token required")
-
     const payload = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
     const id = payload.id;
-
-    const user = prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
         where: {
-            id,
+            id : id
         },
         select: {
+            id : true,
             name: true,
             email: true,
             role: true,
@@ -165,7 +165,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     })
     if (!user) throw new ApiError(404
         , "Invalid request : No user found");
-    if (user.refreshToken !== incomingRefreshToken) throw new ApiError(400, "Unauthorized request ");
+        
+    if (user.refreshToken !== incomingRefreshToken) throw new ApiError(401, "Unauthenticated request ");
     const accessPayload = {
         id: user.id,
         role: user.role,
@@ -178,12 +179,12 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const refreshToken = jwt.sign(refreshPayload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY })
     const accessToken = jwt.sign(accessPayload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRY })
 
-    const updatedUser = prisma.user.update({
+    const updatedUser = await prisma.user.update({
         where: {
-            id
+            id : user.id
         },
         data: {
-            refreshToken
+            refreshToken : refreshToken
         },
         select: {
             name: true,
@@ -226,7 +227,7 @@ const logOutUser = asyncHandler(async (req, res) => {
             refreshToken: null
         }
     })
-    if (!updatedUser) throw new ApiError(400, "Failed to logout user")
+    if (!updatedUser) throw new ApiError(500, "Failed to logout user")
     res.clearCookie("refreshToken", cookieOption)
         .clearCookie("accessToken", cookieOption)
         .status(200)
@@ -239,7 +240,7 @@ const updateUser = asyncHandler(async (req, res) => {
     const user = req.user;
     const { name, password } = req.body;
     // if (!name && !password) throw new ApiError(400, "One or more fields are required");
-    if (name == user.name && password == user.password) throw new ApiError(400, "No changes made");
+    if (name == user.name && password == user.password) throw new ApiError(409, "No changes made");
     const data = {
         ...(name && { name }),
         ...(password && {
@@ -259,7 +260,7 @@ const updateUser = asyncHandler(async (req, res) => {
             role: true
         }
     })
-    if (!updatedUser) throw new ApiError(400, "Failed to update user");
+    if (!updatedUser) throw new ApiError(500, "Failed to update user");
     updatedUser.profileImage = updatedUser.profileImage?.url || null;
     res.status(200).json(new ApiResponse(200, updatedUser, "User updated successfully"));
 

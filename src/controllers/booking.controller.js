@@ -23,7 +23,7 @@ const bookEvent = asyncHandler(async (req, res) => {
 
     // check if user is not the organizer of the event
     if (event.createdBy === user.id) {
-        throw new ApiError(400, "You cannot register for your own event")
+        throw new ApiError(403, "You cannot register for your own event")
     }
 
     // check if the registration already exists
@@ -37,7 +37,7 @@ const bookEvent = asyncHandler(async (req, res) => {
             }
         }
     )
-    if (existingRegistration) throw new ApiError(400, `You have already registered for this event with registration id ${existingRegistration.id}`)
+    if (existingRegistration) throw new ApiError(403, `You have already registered for this event with registration id ${existingRegistration.id}`)
     // create the registration
 
     const newregistration = await prisma.registration.create({
@@ -209,7 +209,7 @@ const cancelBooking = asyncHandler(async (req, res) => {
     const diffHours = diffMs / (1000 * 60 * 60);
 
     if (diffHours < 24) {
-        throw new ApiError(400, "Cannot cancel registration within 24 hours of the event");
+        throw new ApiError(403, "Cannot cancel registration within 24 hours of the event");
     }
     await prisma.registration.delete({
         where: {

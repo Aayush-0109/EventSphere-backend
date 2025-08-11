@@ -2,6 +2,7 @@ import ApiError from "../utils/ApiError.js";
 import jwt from "jsonwebtoken";
 import {prisma} from "../config/connectDB.js"
 import {asyncHandler} from "../utils/asyncHandler.js";
+import { de } from "zod/v4/locales";
 
 const verifyToken = asyncHandler(async (req, _, next) => {
    
@@ -14,7 +15,7 @@ const verifyToken = asyncHandler(async (req, _, next) => {
 
     // Proper JWT verification - errors will be caught by asyncHandler
     const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
-
+    console.log(decoded)
     if (!decoded || !decoded.id) {
         throw new ApiError(401, "Invalid access token");
     }
