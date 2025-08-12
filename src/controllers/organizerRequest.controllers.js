@@ -40,6 +40,7 @@ const createOrganizerRequest = asyncHandler(async (req, res) => {
         include: {
             user: {
                 select: {
+                    id : true,
                     name: true,
                     email: true
                 }
@@ -63,6 +64,7 @@ const getOrganizerRequests = asyncHandler(async (req, res) => {
             include: {
                 user: {
                     select: {
+                        id : true,
                         name: true,
                         email: true,
                     }
@@ -96,6 +98,7 @@ const getOrganizerRequestsById = asyncHandler(async (req, res) => {
         include: {
             user: {
                 select: {
+                    id : true,
                     name: true,
                     email: true,
                     profileImage: true
@@ -166,9 +169,11 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
                 role: newRole
             },
             select: {
-                name: true,
                 id: true,
+                email : true,
+                name: true,
                 role: true,
+                profileImage : true
             }
         })
     }

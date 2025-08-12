@@ -45,6 +45,15 @@ const createEvent = asyncHandler(async (req, res, _) => {
             latitude,
             images: imageUrls,
             createdBy: user.id
+        },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    profileImage: true,
+                }
+            }
         }
     })
 
@@ -56,18 +65,12 @@ const createEvent = asyncHandler(async (req, res, _) => {
         return image.url
 
     }) || []
-    const eventData = {
-        event: event,
-        user: {
-            id: user.id,
-            name: user.name
-        }
-    }
+   
     await geo.removePattern("NearbyFrom:*")
     await cache.del('GET:/api/v1/events/');
     await cache.delPattern('GET:/api/v1/events/?*')
     return res.status(201).json(
-        new ApiResponse(201, eventData, "Event created successfully")
+        new ApiResponse(201, event, "Event created successfully")
     )
 }, "Create Event ")
 
@@ -186,7 +189,8 @@ const getEventById = asyncHandler(async (req, res, _) => {
             user: {
                 select: {
                     id: true,
-                    name: true
+                    name: true,
+                    profileImage : true
                 }
             }
         }

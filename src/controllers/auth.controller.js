@@ -187,6 +187,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             refreshToken : refreshToken
         },
         select: {
+            id: true,
             name: true,
             email: true,
             role: true
@@ -208,8 +209,6 @@ const getUser = asyncHandler(async(req,res)=>{
             email: true,
             role: true,
             profileImage: true,
-            createdAt: true,
-            updatedAt: true
         }
     })
     user.profileImage = user.profileImage?.url

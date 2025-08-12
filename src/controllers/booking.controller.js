@@ -48,20 +48,13 @@ const bookEvent = asyncHandler(async (req, res) => {
         include: {
             user: {
                 select: {
+                    id : true,
                     name: true,
                     email: true,
                     profileImage: true
                 }
             },
-            event: {
-                select: {
-                    title: true,
-                    description: true,
-                    date: true,
-                    location: true,
-
-                }
-            }
+            event: true
         }
     })
 
@@ -78,19 +71,13 @@ const getBookingById = asyncHandler(async (req, res) => {
         include: {
             user: {
                 select: {
+                    id : true,
                     name: true,
                     email: true,
                     profileImage: true
                 }
             },
-            event: {
-                select: {
-                    title: true,
-                    date: true,
-                    location: true,
-                    description: true
-                }
-            }
+            event: true
         }
     })
     if (!booking) throw new ApiError(404, "Booking not found")
@@ -108,6 +95,7 @@ const getEventBookings = asyncHandler(async (req, res) => {
         include: {
             user: {
                 select: {
+                    id : true,
                     name: true,
                     email: true,
                     profileImage: true
@@ -141,14 +129,7 @@ const getUserBookings = asyncHandler(async (req, res) => {
                 userId: user.id
             },
             include: {
-                event: {
-                    select: {
-                        title: true,
-                        date: true,
-                        location: true,
-                        description: true
-                    }
-                }
+                event: true
             },
             skip,
             take: limit,
@@ -179,14 +160,7 @@ const cancelBooking = asyncHandler(async (req, res) => {
             id: bookingId
         },
         include: {
-            event: {
-                select: {
-                    id: true,
-                    title: true,
-                    date: true,
-                    createdBy: true
-                }
-            }
+            event: true
         }
     })
     if (!booking) throw new ApiError(404, "Booking not found")
