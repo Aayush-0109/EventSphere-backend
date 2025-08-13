@@ -65,7 +65,7 @@ const createEvent = asyncHandler(async (req, res, _) => {
         return image.url
 
     }) || []
-   
+
     await geo.removePattern("NearbyFrom:*")
     await cache.del('GET:/api/v1/events/');
     await cache.delPattern('GET:/api/v1/events/?*')
@@ -145,37 +145,37 @@ const getNearbyEvents = asyncHandler(async (req, res) => {
     const { page, limit, skip } = getPagination(req);
     const { longitude, latitude, radius, unit } = req.validatedQuery;
     const { geoEvents, total } = await geo.getNearbyEvents(longitude, latitude, radius, unit);
-    const paginatedGeoEvents = geoEvents.slice(skip,skip+limit);
-    const eventIds = paginatedGeoEvents.map((geoEvent)=>(Number(geoEvent[0])))
-  const eventsFromDB = await prisma.event.findMany({
-    where:{
-        id : {
-            in : eventIds
-        }
-    },
-    include: {
-        user: {
-            select: {
-                id: true,
-                name: true,
-                profileImage: true,
+    const paginatedGeoEvents = geoEvents.slice(skip, skip + limit);
+    const eventIds = paginatedGeoEvents.map((geoEvent) => (Number(geoEvent[0])))
+    const eventsFromDB = await prisma.event.findMany({
+        where: {
+            id: {
+                in: eventIds
+            }
+        },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    profileImage: true,
+                }
             }
         }
-    }
-  })
-    const eventMap = new Map(eventsFromDB.map(e => [e.id , e]));
+    })
+    const eventMap = new Map(eventsFromDB.map(e => [e.id, e]));
     const events = paginatedGeoEvents.map(geoEvent => {
         const event = eventMap.get(Number(geoEvent[0]));
         if (event) {
-            event.images = event.images? event.images[0]?.url : null;
+            event.images = event.images ? event.images[0]?.url : null;
             event.distance = parseFloat(geoEvent[1]); // Add distance info
         }
         return event;
     }).filter(event => event !== null);
-    return res.status(200).json(new ApiResponse(200,{
+    return res.status(200).json(new ApiResponse(200, {
         events,
-        meta : getMeta(total,page,limit)
-    },"Events fetched successfully"))
+        meta: getMeta(total, page, limit)
+    }, "Events fetched successfully"))
 
 }, "get nearby events")
 
@@ -190,7 +190,7 @@ const getEventById = asyncHandler(async (req, res, _) => {
                 select: {
                     id: true,
                     name: true,
-                    profileImage : true
+                    profileImage: true
                 }
             }
         }
@@ -287,4 +287,58 @@ const deleteEvent = asyncHandler(async (req, res, _) => {
         new ApiResponse(200, {}, "Event deleted successfully")
     )
 }, " Delete Event")
-export { createEvent, getEvents,getNearbyEvents, getEventById, updateEvent, deleteEvent }
+
+const getMyEvents = asyncHandler(async (req, res) => {
+    const user = req.user;
+    const { page, limit, skip } = getPagination(req);
+    const { sortBy, sortOrder } = req.validatedQuery || {};
+
+    const whereClause = {
+        createdBy: user.id
+    };
+
+    const [events, total] = await Promise.all([
+        prisma.event.findMany({
+            where: whereClause,
+            skip,
+            take: limit,
+            orderBy: {
+                [sortBy || 'createdAt']: sortOrder || 'desc'
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        profileImage: true,
+                    }
+                },
+                _count: {
+                    select: {
+                        registrations: true
+                    }
+                }
+            }
+        }),
+        prisma.event.count({ where: whereClause })
+    ]);
+
+   
+    events.forEach((event) => {
+        event.images = event.images[0]?.url || null;
+       
+        event.bookingCount = event._count?.registrations || 0;
+        delete event._count;
+    });
+
+    const response = {
+        events,
+        meta: getMeta(total, page, limit)
+    };
+
+    
+    return res.status(200).json(
+        new ApiResponse(200, response, "My events fetched successfully")
+    );
+}, "Get My Events");
+export { createEvent, getEvents, getNearbyEvents, getEventById, updateEvent, deleteEvent,getMyEvents }

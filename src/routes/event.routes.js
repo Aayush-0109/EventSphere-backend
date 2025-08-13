@@ -5,7 +5,8 @@ import {
     getEventById,
     updateEvent,
     deleteEvent,
-    getNearbyEvents
+    getNearbyEvents,
+    getMyEvents
 } from "../controllers/event.controller.js"
 import { bookEvent, getEventBookings } from "../controllers/booking.controller.js";
 import authorizeRoles from "../middlewares/authorzeRoles.middleware.js";
@@ -20,12 +21,14 @@ import cacheMiddleware from "../middlewares/cache.middleware.js";
 const router = Router()
 router.get("/", gentleRateLimit, cacheMiddleware(300), validateQuery(getEventsQuerySchema), getEvents);
 router.get("/:id", gentleRateLimit, cacheMiddleware(300), validateParams(eventParamsSchema), getEventById);
-router.get("/search/nearby",gentleRateLimit,cacheMiddleware(300),validateQuery(geoSearchSchema),getNearbyEvents)
+router.get("/search/nearby", gentleRateLimit, cacheMiddleware(300), validateQuery(geoSearchSchema), getNearbyEvents)
 
 // protected routes
 
 
-
+router.get("/get/my-events", verifyToken, authorizeRoles("ORGANIZER", "ADMIN"),
+    gentleRateLimit, cacheMiddleware(300),
+    validateQuery(getEventsQuerySchema), getMyEvents);
 router.post("/", verifyToken, authorizeRoles("ADMIN", "ORGANIZER"), strictRateLimit, imageUpload.array("images", 10), validateBody(createEventSchema), createEvent);
 router.put("/:id", verifyToken, authorizeRoles("ADMIN", "ORGANIZER"), strictRateLimit, validateParams(eventParamsSchema), validateBody(updateEventSchema), updateEvent);
 router.delete("/:id", verifyToken, authorizeRoles("ADMIN", "ORGANIZER"), moderateRateLimit, validateParams(eventParamsSchema), deleteEvent);
