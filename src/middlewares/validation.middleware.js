@@ -35,7 +35,7 @@ const validateQuery = (schema) => (req, _, next) => {
         }))
       return  next(new ApiError(400, "Invalid query parameters", errorMessages))
     }
-    req.validateQuery = result.data;
+    req.validatedQuery = result.data;
     next()
 }
 export { validateBody, validateQuery, validateParams }
