@@ -7,7 +7,10 @@ const cacheMiddleware = (ttl = 300) => async (req, res, next) => {
     }
     const key = `${req.method}:${req.originalUrl}`
     const cachedData = await cache.get(key);
-    if (cachedData) return res.json(cachedData)
+    if (cachedData){ 
+        
+        return res.json(cachedData)
+    }
 
     const originalJson = res.json;
 

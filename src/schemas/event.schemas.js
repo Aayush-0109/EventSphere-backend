@@ -14,12 +14,8 @@ const createEventSchema = z.object({
         .string().datetime("Invalid date format , use ISO string")
         .transform(date => new Date(date))
         .refine(date => date > new Date(), "Event date must be in future"),
-    longitude: z.number()
-        .min(-180, "invalid longitude")
-        .max(180, "invalid longitude"),
-    latitude: z.number()
-        .min(-85.05112878, "invalid latitude")
-        .max(+85.05112878, "invalid latitude"),
+    longitude: z.string().transform((val) => parseFloat(val)),
+    latitude: z.string().transform((val) => parseFloat(val)),
 
     address: z.string().min(5, "Complete address is required"),
     city: z.string().min(2, "City is required"),

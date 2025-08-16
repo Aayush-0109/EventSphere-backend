@@ -26,7 +26,7 @@ class Geo {
     async removePattern(pattern) {
         try {
             const totalFields = await redis.keys(pattern)
-
+           if(totalFields.length)
             await redis.unlink(...totalFields)
 
         } catch (error) {
@@ -47,13 +47,13 @@ class Geo {
         try {
             const key = `NearbyFrom:${longitude}:${latitude}`
             // checking if already exists 
-            if (await redis.exists(key)) return { geoEvents: await redis.zrange(key, 0, -1, 'WITHSCORES'), total :await redis.zcard(key)}
+            if (await redis.exists(key)) return { geoEvents: await redis.zrange(key, 0, -1, 'WITHSCORES'), total: await redis.zcard(key) }
             // caching the result 
             await redis.geosearchstore(key, this.GEO_KEY, 'FROMLONLAT', longitude, latitude, 'BYRADIUS', radius, unit, 'STOREDIST')
-            await redis.expire(key, 24*60*60)
+            await redis.expire(key, 24 * 60 * 60)
             // returning result
-           
-            return { geoEvents : await redis.zrange(key, 0, -1, 'WITHSCORES'), total :await redis.zcard(key)}
+
+            return { geoEvents: await redis.zrange(key, 0, -1, 'WITHSCORES'), total: await redis.zcard(key) }
         } catch (error) {
             throw new ApiError(500, "error while getting loction through geo index" + error.message)
         }

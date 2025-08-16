@@ -11,7 +11,7 @@ class Cache {
     }
     async set(key, data, ttl = 300) {
         try {
-            console.log(" set", data);
+            console.log(" set ", key);
             await redis.setex(key, ttl, JSON.stringify(data));
         } catch (error) {
             console.log("cache error : ", error)
@@ -29,7 +29,7 @@ class Cache {
         try {
             console.log("delPattern ", pattern);
             const keys = await redis.keys(pattern);
-            if (keys.length > 0) await redis.del(...keys)
+            if (keys.length > 0) await redis.unlink(...keys)
         } catch (error) {
             console.log("cache error : ", error)
         }

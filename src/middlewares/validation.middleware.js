@@ -1,6 +1,7 @@
 import ApiError from "../utils/ApiError.js"
 
 const validateBody = (schema) => (req, _, next) => {
+    console.log(req.body);
     const result = schema.safeParse(req.body)
     if (!result.success) {
         console.log(result.error.issues)

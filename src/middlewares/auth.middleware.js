@@ -15,7 +15,6 @@ const verifyToken = asyncHandler(async (req, _, next) => {
 
     // Proper JWT verification - errors will be caught by asyncHandler
     const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
-    console.log(decoded)
     if (!decoded || !decoded.id) {
         throw new ApiError(401, "Invalid access token");
     }

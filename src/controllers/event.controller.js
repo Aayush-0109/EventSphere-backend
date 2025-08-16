@@ -6,8 +6,6 @@ import { getPagination, getMeta } from "../utils/pagination.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import cache from "../utils/cache.js";
 import geo from "../utils/geoService.js";
-import { id } from "zod/locales";
-import { includes } from "zod";
 const createEvent = asyncHandler(async (req, res, _) => {
     const user = req.user
     const { title, description, date, address, city, state, country, postalCode, longitude, latitude } = req.body
@@ -67,15 +65,15 @@ const createEvent = asyncHandler(async (req, res, _) => {
     }) || []
 
     await geo.removePattern("NearbyFrom:*")
-    await cache.del('GET:/api/v1/events/');
-    await cache.delPattern('GET:/api/v1/events/?*')
+    await cache.del('GET:/api/v1/events');
+    await cache.delPattern('GET:/api/v1/events?*')
     return res.status(201).json(
         new ApiResponse(201, event, "Event created successfully")
     )
 }, "Create Event ")
 
 const getEvents = asyncHandler(async (req, res, _) => {
-
+ 
     const { search, location, startDate, endDate, sortBy, sortOrder } = req.validatedQuery ? req.validatedQuery : {}
     // get pagination
     const { page, limit, skip } = getPagination(req)
@@ -121,6 +119,11 @@ const getEvents = asyncHandler(async (req, res, _) => {
                         name: true,
                         profileImage: true,
                     }
+                },
+                _count: {
+                    select: {
+                        registrations: true
+                    }
                 }
             }
         }),
@@ -129,8 +132,12 @@ const getEvents = asyncHandler(async (req, res, _) => {
         })
     ])
     events.forEach((event) => {
-        event.images = event.images[0]?.url || null
+        event.images = event.images[0]?.url || null;
+        event.registrations = event._count?.registrations || 0;
+        delete event._count
     })
+
+
     const response = {
         events,
         meta: getMeta(total, page, limit)
@@ -160,6 +167,11 @@ const getNearbyEvents = asyncHandler(async (req, res) => {
                     name: true,
                     profileImage: true,
                 }
+            },
+            _count: {
+                select: {
+                    registrations: true
+                }
             }
         }
     })
@@ -168,6 +180,8 @@ const getNearbyEvents = asyncHandler(async (req, res) => {
         const event = eventMap.get(Number(geoEvent[0]));
         if (event) {
             event.images = event.images ? event.images[0]?.url : null;
+            event.registrations = event._count?.registrations || 0
+            delete event._count
             event.distance = parseFloat(geoEvent[1]); // Add distance info
         }
         return event;
@@ -192,6 +206,11 @@ const getEventById = asyncHandler(async (req, res, _) => {
                     name: true,
                     profileImage: true
                 }
+            },
+            _count: {
+                select: {
+                    registrations: true
+                }
             }
         }
 
@@ -200,6 +219,8 @@ const getEventById = asyncHandler(async (req, res, _) => {
     event.images = event.images?.map((image) => {
         return image.url
     }) || []
+    event.registrations = event._count?.registrations
+    delete event._count
     return res.status(200).json(
         new ApiResponse(200, event, "Event fetched Successfully"))
 }, "Get Event By ID")
@@ -239,8 +260,21 @@ const updateEvent = asyncHandler(async (req, res, _) => {
             id: id
         },
         data,
-        include: { user: { select: { id: true, name: true } } }
+        include: {
+            user: {
+                select: {
+                    id: true, name: true, profileImage: true
+                }
+            },
+            _count: {
+                select: {
+                    registrations: true
+                }
+            }
+        }
     })
+    updateEvent.registrations = updateEvent._count?.registrations
+    delete updateEvent._count
     if (longitude) await geo.updateEvent(id, longitude, latitude);
     // cache invalidation
     await geo.removePattern("NearbyFrom:*")
@@ -323,10 +357,10 @@ const getMyEvents = asyncHandler(async (req, res) => {
         prisma.event.count({ where: whereClause })
     ]);
 
-   
+
     events.forEach((event) => {
         event.images = event.images[0]?.url || null;
-       
+
         event.bookingCount = event._count?.registrations || 0;
         delete event._count;
     });
@@ -336,9 +370,9 @@ const getMyEvents = asyncHandler(async (req, res) => {
         meta: getMeta(total, page, limit)
     };
 
-    
+
     return res.status(200).json(
         new ApiResponse(200, response, "My events fetched successfully")
     );
 }, "Get My Events");
-export { createEvent, getEvents, getNearbyEvents, getEventById, updateEvent, deleteEvent,getMyEvents }
+export { createEvent, getEvents, getNearbyEvents, getEventById, updateEvent, deleteEvent, getMyEvents }
