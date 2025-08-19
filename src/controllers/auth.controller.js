@@ -239,7 +239,8 @@ const updateUser = asyncHandler(async (req, res) => {
     const user = req.user;
     const { name, password } = req.body;
     // if (!name && !password) throw new ApiError(400, "One or more fields are required");
-    if (name == user.name && password == user.password) throw new ApiError(409, "No changes made");
+    if ((name && name == user.name)) throw new ApiError(409, "Name could not be same as previous one");
+         if((password && password == user.password)) throw new ApiError(409, "Password could not be same as previous one");
     const data = {
         ...(name && { name }),
         ...(password && {

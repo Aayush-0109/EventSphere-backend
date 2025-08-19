@@ -26,9 +26,7 @@ router.get("/search/nearby", gentleRateLimit, cacheMiddleware(300), validateQuer
 // protected routes
 
 
-router.get("/get/my-events", verifyToken, authorizeRoles("ORGANIZER", "ADMIN"),
-    gentleRateLimit, cacheMiddleware(300),
-    validateQuery(getEventsQuerySchema), getMyEvents);
+router.get("/get/my-events", verifyToken, authorizeRoles("ORGANIZER", "ADMIN"),gentleRateLimit,validateQuery(getEventsQuerySchema), getMyEvents);
 router.post("/", verifyToken, authorizeRoles("ADMIN", "ORGANIZER"), strictRateLimit, imageUpload.array("images", 10), validateBody(createEventSchema), createEvent);
 router.put("/:id", verifyToken, authorizeRoles("ADMIN", "ORGANIZER"), strictRateLimit, validateParams(eventParamsSchema), validateBody(updateEventSchema), updateEvent);
 router.delete("/:id", verifyToken, authorizeRoles("ADMIN", "ORGANIZER"), moderateRateLimit, validateParams(eventParamsSchema), deleteEvent);

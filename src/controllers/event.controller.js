@@ -73,7 +73,7 @@ const createEvent = asyncHandler(async (req, res, _) => {
 }, "Create Event ")
 
 const getEvents = asyncHandler(async (req, res, _) => {
- 
+
     const { search, location, startDate, endDate, sortBy, sortOrder } = req.validatedQuery ? req.validatedQuery : {}
     // get pagination
     const { page, limit, skip } = getPagination(req)
@@ -361,7 +361,7 @@ const getMyEvents = asyncHandler(async (req, res) => {
     events.forEach((event) => {
         event.images = event.images[0]?.url || null;
 
-        event.bookingCount = event._count?.registrations || 0;
+        event.registrations = event._count?.registrations || 0;
         delete event._count;
     });
 

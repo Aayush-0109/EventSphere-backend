@@ -37,7 +37,7 @@ const bookEvent = asyncHandler(async (req, res) => {
             }
         }
     )
-    if (existingRegistration) throw new ApiError(403, `You have already registered for this event with registration id ${existingRegistration.id}`)
+    if (existingRegistration) throw new ApiError(409, `You have already registered for this event with registration id ${existingRegistration.id}`)
     // create the registration
 
     const newregistration = await prisma.registration.create({
@@ -81,6 +81,8 @@ const getBookingById = asyncHandler(async (req, res) => {
         }
     })
     if (!booking) throw new ApiError(404, "Booking not found")
+
+        booking.event.images = booking.event.images[0]?.url || ""
     res.status(200).json(new ApiResponse(200, booking, "Booking fetched successfully"))
 }, "Get Booking By Id")
 const getEventBookings = asyncHandler(async (req, res) => {
@@ -144,6 +146,11 @@ const getUserBookings = asyncHandler(async (req, res) => {
             }
         })
     ])
+    registrations.forEach((booking)=>{
+        console.log(booking.event.images);
+        
+        booking.event.images = booking.event.images[0]?.url || ""
+    })
     res.status(200).json(new ApiResponse(200, {
         registrations,
         meta: getMeta(total, page, limit)

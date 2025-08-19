@@ -1,5 +1,5 @@
 import { idSchema, paginationSchema } from "./common.schemas.js";
-import {  z } from "zod";
+import { z } from "zod";
 
 const createEventSchema = z.object({
     title: z.string()
@@ -40,14 +40,8 @@ const updateEventSchema = z.object({
         .transform(date => new Date(date))
         .refine(date => date > new Date(), "Event date must be in future")
         .optional(),
-    longitude: z.number()
-        .min(-180, "invalid longitude")
-        .max(180, "invalid longitude")
-        .optional(),
-    latitude: z.number()
-        .min(-85.05112878, "invalid latitude")
-        .max(85.05112878, "invalid latitude")
-        .optional(),
+    longitude: z.string().transform((val) => parseFloat(val)),
+    latitude: z.string().transform((val) => parseFloat(val)),
     address: z.string().min(5).optional(),
     city: z.string().min(2).optional(),
     state: z.string().min(2).optional(),
