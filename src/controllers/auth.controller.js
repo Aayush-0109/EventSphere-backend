@@ -10,9 +10,9 @@ import { email } from "zod";
 // cookie option
 const cookieOption = {
     httpOnly: true,
-    secure: true,
+    secure: false,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite : 'strict'
+    sameSite : 'lax'
 }
 
 
