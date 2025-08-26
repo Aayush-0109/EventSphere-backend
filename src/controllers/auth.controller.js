@@ -8,11 +8,15 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import otpService from '../services/otp.service.js'
 
 
+// Cookie settings: cross-site requires SameSite=None and Secure
+const isProd = process.env.NODE_ENV === 'production'
+const secureFlag = (process.env.COOKIE_SECURE === 'true') || isProd
+const sameSiteValue = (process.env.COOKIE_SAMESITE) || (secureFlag ? 'none' : 'lax')
 const cookieOption = {
     httpOnly: true,
-    secure: false,
+    secure: secureFlag,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax'
+    sameSite: sameSiteValue
 }
 
 
