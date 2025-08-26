@@ -3,14 +3,8 @@
 import multer from "multer";
 import ApiError from "../utils/ApiError.js";
 
-const storage = multer.diskStorage({
-    destination: function(req,file,cb){
-        cb(null,"./public/temp");
-    },
-    filename: function(req,file,cb){
-        cb(null,Date.now() + "-" + file.originalname);
-    }
-})
+
+const storage = multer.memoryStorage();
 
 const imageFileFilter = (req, file, cb) => {
   const allowedTypes = ["image/png", "image/jpg", "image/jpeg"];
@@ -24,4 +18,4 @@ const pdfFileFilter = (req, file, cb) => {
   if (file.mimetype === "application/pdf") cb(null, true);
   else cb(new ApiError(400, "Invalid file type, only PDF allowed"), false);
 };
-export const pdfUpload = multer({ storage, fileFilter: pdfFileFilter ,limits: { fileSize: 2 * 1024 * 1024 }});
+export const pdfUpload = multer({ storage, fileFilter: pdfFileFilter, limits: { fileSize: 2 * 1024 * 1024 } });

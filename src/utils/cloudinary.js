@@ -7,21 +7,45 @@ cloudinary.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
 })
-const uploadOnCloudinary = async (path, options) => {
+// Accept either a file path (string) or an in-memory buffer with originalname
+// If a buffer is provided, we stream it to Cloudinary to avoid disk writes
+const uploadOnCloudinary = async (file, options) => {
     try {
-        if (!path) throw new ApiError(400, "Image path is required");
+        if (!file) throw new ApiError(400, "Image is required");
         const processedOptions = options || {
             folder: "event-management",
             resource_type: "auto"
         }
-        const result = await cloudinary.uploader.upload(path, processedOptions);
+        // If a Buffer-like object was passed (from multer memory storage)
+        if (typeof file !== 'string') {
+            const { buffer, originalname, mimetype } = file;
+            if (!buffer) throw new ApiError(400, "Invalid file buffer");
+            const streamUpload = () => new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream({
+                    ...processedOptions,
+                    filename_override: originalname,
+                    resource_type: processedOptions.resource_type || 'auto',
+                }, (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result);
+                });
+                stream.end(buffer);
+            });
+            const result = await streamUpload();
+            return result;
+        }
+        // Fallback: a filesystem path was provided
+        const result = await cloudinary.uploader.upload(file, processedOptions);
         return result;
     } catch (error) {
 
         throw new ApiError(500, "Error in uploading image to cloudinary");
     }
     finally {
-         fs.unlinkSync(path);
+        // If a file path string was used, try cleaning it up; ignore errors
+        if (typeof file === 'string') {
+            try { fs.unlinkSync(file); } catch { }
+        }
     }
 }
 

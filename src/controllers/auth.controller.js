@@ -39,15 +39,15 @@ const generateToken = async (user) => {
 }
 
 const registerUser = asyncHandler(async (req, res, next) => {
-    
+
     const { name, email, password } = req.body;
 
-    
-    
-    
-    
 
-    
+
+
+
+
+
     const existingUser = await prisma.user.findUnique({
         where: {
             email: email
@@ -57,15 +57,15 @@ const registerUser = asyncHandler(async (req, res, next) => {
         throw new ApiError(409, "User already exists");
     }
 
-    
+
     const hashedPassword = bcrypt.hashSync(password.trim(), 10);
 
-    
-    const imagePath = req.file?.path;
+
+    const file = req.file;
     let profileImage = null;
-    console.log(imagePath);
-    if (imagePath) {
-        const image = await uploadOnCloudinary(imagePath, {
+    console.log(file);
+    if (file) {
+        const image = await uploadOnCloudinary(file, {
             folder: "users",
             resource_type: "image"
         });
@@ -77,7 +77,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
         }
     }
 
-    
+
     const user = await prisma.user.create({
         data: {
             name,
@@ -253,7 +253,7 @@ const logOutUser = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
     const user = req.user;
     const { name, password } = req.body;
-    
+
     if ((name && name == user.name)) throw new ApiError(409, "Name could not be same as previous one");
     if ((password && password == user.password)) throw new ApiError(409, "Password could not be same as previous one");
     const data = {
@@ -280,4 +280,4 @@ const updateUser = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, updatedUser, "User updated successfully"));
 
 }, "Update user")
-export { registerUser, loginUser, getUser, logOutUser, updateUser, refreshAccessToken ,sendOtp,verifyOtp}
+export { registerUser, loginUser, getUser, logOutUser, updateUser, refreshAccessToken, sendOtp, verifyOtp }
