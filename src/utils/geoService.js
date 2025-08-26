@@ -46,12 +46,12 @@ class Geo {
     async getNearbyEvents(longitude, latitude, radius, unit) {
         try {
             const key = `NearbyFrom:${longitude}:${latitude}`
-            // checking if already exists 
+            
             if (await redis.exists(key)) return { geoEvents: await redis.zrange(key, 0, -1, 'WITHSCORES'), total: await redis.zcard(key) }
-            // caching the result 
+            
             await redis.geosearchstore(key, this.GEO_KEY, 'FROMLONLAT', longitude, latitude, 'BYRADIUS', radius, unit, 'STOREDIST')
             await redis.expire(key, 24 * 60 * 60)
-            // returning result
+            
 
             return { geoEvents: await redis.zrange(key, 0, -1, 'WITHSCORES'), total: await redis.zcard(key) }
         } catch (error) {

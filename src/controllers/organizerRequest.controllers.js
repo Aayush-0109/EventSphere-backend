@@ -106,7 +106,7 @@ const getOrganizerRequestsById = asyncHandler(async (req, res) => {
             }
         }
     })
-    // removing public id from response
+    
     if (!organizerRequest) throw new ApiError(404, "organizer request not found");
     organizerRequest.user.profileImage = organizerRequest.user.profileImage?.url
     organizerRequest.resume = organizerRequest.resume?.url
@@ -118,10 +118,10 @@ const getOrganizerRequestsById = asyncHandler(async (req, res) => {
 }, " get organizer request by id")
 
 const updateRequestStatus = asyncHandler(async (req, res) => {
-    // validating request
+    
     const id = Number(req.params.id);
     const status = req.body.status
-    // extracting request and updating
+    
     const existingRequest = await prisma.organizerRequest.findUnique({
         where: {
             id
@@ -139,7 +139,7 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
         }
     })
    
-    // updating user role
+    
     const userId = updatedRequest.userId;
     const user = await tx.user.findUnique({
         where: {
@@ -179,7 +179,7 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
     }
     return {updatedRequest,updatedUser}
     })
-      // removing public id from response
+      
       response.updatedRequest.resume = response.updatedRequest?.resume?.url
     return res.status(200).json(
         new ApiResponse(200, response, "Status updated Successfully")

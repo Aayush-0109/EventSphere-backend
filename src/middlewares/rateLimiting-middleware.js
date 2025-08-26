@@ -77,7 +77,7 @@ const gentleRateLimit = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req) => {
-        if (req.user) return `user_${req.user.id}_${req.method}_${req.route?.path || req.path}`;  // ← req.user doesn't exist at login time!
+        if (req.user) return `user_${req.user.id}_${req.method}_${req.route?.path || req.path}`;  
         else return `ip_${ipKeyGenerator(req)}_${req.method}_${req.path}`;
     },
     message: {

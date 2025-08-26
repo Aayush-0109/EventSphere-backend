@@ -7,7 +7,7 @@ import { deleteUserParamSchema, getUsersQuerySchema } from "../schemas/user.sche
 
 const router = Router()
 
-// Admin routes
+
 router.get("/", verifyToken, authorizeRoles("ADMIN"), validateQuery(getUsersQuerySchema), getUsers);
 router.delete("/:id", verifyToken, authorizeRoles("ADMIN"), validateParams(deleteUserParamSchema), deleteUser);
 

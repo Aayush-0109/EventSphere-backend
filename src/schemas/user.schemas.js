@@ -1,4 +1,4 @@
-// backend/src/schemas/user.schemas.js
+
 import { z } from "zod";
 import { idSchema } from "./common.schemas.js";
 

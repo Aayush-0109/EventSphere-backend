@@ -11,7 +11,7 @@ const storage = multer.diskStorage({
         cb(null,Date.now() + "-" + file.originalname);
     }
 })
-// image
+
 const imageFileFilter = (req, file, cb) => {
   const allowedTypes = ["image/png", "image/jpg", "image/jpeg"];
   if (allowedTypes.includes(file.mimetype)) cb(null, true);
@@ -19,7 +19,7 @@ const imageFileFilter = (req, file, cb) => {
 };
 export const imageUpload = multer({ storage, fileFilter: imageFileFilter });
 
-// pdf
+
 const pdfFileFilter = (req, file, cb) => {
   if (file.mimetype === "application/pdf") cb(null, true);
   else cb(new ApiError(400, "Invalid file type, only PDF allowed"), false);

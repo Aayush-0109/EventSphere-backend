@@ -13,7 +13,7 @@ const verifyToken = asyncHandler(async (req, _, next) => {
         throw new ApiError(401, "Access token required");
     }
 
-    // Proper JWT verification - errors will be caught by asyncHandler
+    
     const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
     if (!decoded || !decoded.id) {
         throw new ApiError(401, "Invalid access token");
@@ -21,7 +21,7 @@ const verifyToken = asyncHandler(async (req, _, next) => {
 
 
 
-    // Database query with proper error handling
+    
     const userFound = await prisma.user.findUnique({
         where: {
             id: decoded.id

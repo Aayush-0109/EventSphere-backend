@@ -30,11 +30,11 @@ class OTP {
     }
 
     async verifyOtp(email, otp) {
-        // keys
+        
         const key = `OTP_${email}`
         const attemptKey = `OTP_ATTEMPT_${email}`
 
-          // otps
+          
         const hashedOtp = this.hashOtp(otp);
         const trueOtp = await cache.get(key);
 

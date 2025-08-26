@@ -7,7 +7,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import otpService from '../services/otp.service.js'
 
-// cookie option
+
 const cookieOption = {
     httpOnly: true,
     secure: false,
@@ -39,15 +39,15 @@ const generateToken = async (user) => {
 }
 
 const registerUser = asyncHandler(async (req, res, next) => {
-    // get data from body
+    
     const { name, email, password } = req.body;
 
-    // if (!name) throw new ApiError(400, "Name is required");
-    // if (!email || !password) {
-    //     throw new ApiError(400, "Email and password are required");
-    // }
+    
+    
+    
+    
 
-    // check if user already exists
+    
     const existingUser = await prisma.user.findUnique({
         where: {
             email: email
@@ -57,10 +57,10 @@ const registerUser = asyncHandler(async (req, res, next) => {
         throw new ApiError(409, "User already exists");
     }
 
-    // hash password
+    
     const hashedPassword = bcrypt.hashSync(password.trim(), 10);
 
-    // upload image to cloudinary
+    
     const imagePath = req.file?.path;
     let profileImage = null;
     console.log(imagePath);
@@ -77,7 +77,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
         }
     }
 
-    // create user
+    
     const user = await prisma.user.create({
         data: {
             name,
@@ -253,7 +253,7 @@ const logOutUser = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
     const user = req.user;
     const { name, password } = req.body;
-    // if (!name && !password) throw new ApiError(400, "One or more fields are required");
+    
     if ((name && name == user.name)) throw new ApiError(409, "Name could not be same as previous one");
     if ((password && password == user.password)) throw new ApiError(409, "Password could not be same as previous one");
     const data = {

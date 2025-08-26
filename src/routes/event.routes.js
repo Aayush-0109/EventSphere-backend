@@ -23,7 +23,7 @@ router.get("/", gentleRateLimit, cacheMiddleware(300), validateQuery(getEventsQu
 router.get("/:id", gentleRateLimit, cacheMiddleware(300), validateParams(eventParamsSchema), getEventById);
 router.get("/search/nearby", gentleRateLimit, validateQuery(geoSearchSchema), getNearbyEvents)
 
-// protected routes
+
 
 
 router.get("/get/my-events", verifyToken, authorizeRoles("ORGANIZER", "ADMIN"),gentleRateLimit,validateQuery(getEventsQuerySchema), getMyEvents);

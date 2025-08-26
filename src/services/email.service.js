@@ -6,7 +6,7 @@ import nodemailer from "nodemailer";
     this.emailPass = process.env.EMAIL_PASS;
     this.emailFrom = process.env.EMAIL_FROM || `"My App" <${this.emailUser}>`;
 
-    // Setup transporter (SMTP)
+    
     this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: process.env.SMTP_PORT || 465,

@@ -1,4 +1,3 @@
-// backend/src/controllers/user.controller.js
 import { asyncHandler } from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
@@ -11,7 +10,7 @@ const getUsers = asyncHandler(async (req, res) => {
     const { page, limit, skip } = getPagination(req);
     const { search, role, sortBy, sortOrder } = req.validatedQuery || {};
 
-    // Build where clause
+    
     const whereClause = {
         ...(search && {
             OR: [
@@ -22,12 +21,12 @@ const getUsers = asyncHandler(async (req, res) => {
         ...(role && role !== 'ALL' && { role }),
     };
 
-    // Build order by clause
+    
     const orderByClause = {};
     if (sortBy && sortOrder) {
         orderByClause[sortBy] = sortOrder;
     } else {
-        orderByClause.createdAt = 'desc'; // Default sorting
+        orderByClause.createdAt = 'desc'; 
     }
 
     const [users, total] = await Promise.all([
@@ -55,7 +54,7 @@ const getUsers = asyncHandler(async (req, res) => {
         prisma.user.count({ where: whereClause })
     ]);
 
-    // Transform data
+    
     const transformedUsers = users.map(user => ({
         ...user,
         eventsCount: user._count.events,
@@ -82,7 +81,7 @@ const deleteUser = asyncHandler(async (req, res) => {
     const userId = Number(req.params.id);
     const currentUser = req.user;
 
-    // Prevent admin from deleting themselves
+    
     if (currentUser.id === userId) {
         throw new ApiError(400, "You cannot delete your own account");
     }
@@ -103,7 +102,7 @@ const deleteUser = asyncHandler(async (req, res) => {
     if (userToDelete.role === "ADMIN") throw new ApiError(400, "You cannot delete other admin's account");
 
 
-    // Delete user's profile image from Cloudinary if exists
+    
     if (userToDelete.profileImage && typeof userToDelete.profileImage === 'object' && userToDelete.profileImage.publicId) {
         try {
             await deleteFromCloudinary(userToDelete.profileImage.publicId);
@@ -126,7 +125,7 @@ const deleteUser = asyncHandler(async (req, res) => {
         }
     }
 
-    // Delete the user (this will cascade delete related data due to Prisma schema)
+    
     await prisma.user.delete({
         where: { id: userId }
     });
