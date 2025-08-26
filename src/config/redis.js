@@ -1,14 +1,11 @@
 import Redis from "ioredis";
 
 function createRedisClient() {
-    // Prefer a full URL if provided (e.g., Upstash TCP rediss://...)
     const url = process.env.REDIS_URL;
     if (url) {
         const client = new Redis(url, {
-            // Ensure we don't hang forever on failing requests
             maxRetriesPerRequest: 3,
             retryDelayOnFailover: 100,
-            // ioredis uses TLS automatically for rediss:// URLs
         });
         wireEvents(client);
         return client;

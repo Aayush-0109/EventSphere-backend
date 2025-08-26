@@ -31,13 +31,18 @@ services:
     environment:
       PORT: "8000"
       FRONTEND_URL: "http://localhost:5173"
-      DATABASE_URL: "postgresql://postgres:Parvati..18@postgres:5432/eventdb?schema=public"
+      # DATABASE_URL: "postgresql://postgres:Parvati..18@postgres:5432/eventdb?schema=public"
       # Prefer a single Redis URL when using providers like Upstash (rediss://default:PASS@HOST:6379)
-      REDIS_URL: ""
-      REDIS_HOST: "redis"
-      REDIS_PORT: "6379"
-      REDIS_USERNAME: ""
-      REDIS_PASSWORD: ""
+      DATABASE_URL: "postgresql://neondb_owner:npg_kA9dXOzqJxR1@ep-fancy-fire-adht1tcd-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+      # REDIS_URL: "rediss://default:AY5rAAIncDEzYWY5MGIyMjFiNTk0Mzk1ODZhYmFhYjcyM2I2MDMzNnAxMzY0NTk@direct-orca-36459.upstash.io:6379"
+      # REDIS_HOST: "redis"
+      REDIS_HOST: "redis-17337.c275.us-east-1-4.ec2.redns.redis-cloud.com"
+      # REDIS_PORT: "6379"
+      REDIS_PORT: "17337"
+      # REDIS_USERNAME: ""
+      REDIS_USERNAME: "Aayush"
+      # REDIS_PASSWORD: ""
+      REDIS_PASSWORD: "Aayush..18"
       # Enable TLS for host/port style when needed (e.g., Upstash)
       REDIS_TLS: "false"
       ACCESS_TOKEN_SECRET: "dev_access_secret_change_me"
@@ -55,6 +60,7 @@ services:
       CLOUDINARY_API_SECRET: ""
     ports:
       - "8000:8000"
+      - "5555:5555"
 
 volumes:
   pgdata:
