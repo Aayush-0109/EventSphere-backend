@@ -1,21 +1,51 @@
 import Redis from "ioredis";
-const redis =  new Redis({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-    username: process.env.REDIS_USERNAME,
-    password: process.env.REDIS_PASSWORD,
-    retryDelayOnFailover: 100,
-    maxRetriesPerRequest:3,
 
-})
-redis.on('connect',()=>{
-    console.log("connecting to redis");
+function createRedisClient() {
+    // Prefer a full URL if provided (e.g., Upstash TCP rediss://...)
+    const url = process.env.REDIS_URL;
+    if (url) {
+        const client = new Redis(url, {
+            // Ensure we don't hang forever on failing requests
+            maxRetriesPerRequest: 3,
+            retryDelayOnFailover: 100,
+            // ioredis uses TLS automatically for rediss:// URLs
+        });
+        wireEvents(client);
+        return client;
+    }
 
-})
-redis.on('ready',()=>{
-    console.log("connected to redis");
-})
-redis.on('error',(err)=>{
-    console.log('Redis error', err);
-})
-export default redis
+    // Fallback to host/port style
+    const options = {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT) || 6379,
+        username: process.env.REDIS_USERNAME,
+        password: process.env.REDIS_PASSWORD,
+        retryDelayOnFailover: 100,
+        maxRetriesPerRequest: 3,
+    };
+
+    // Enable TLS for providers like Upstash when using host/port
+    const hostLower = (options.host || "").toLowerCase();
+    if (hostLower.includes("upstash.io") || process.env.REDIS_TLS === "true") {
+        options.tls = {};
+    }
+
+    const client = new Redis(options);
+    wireEvents(client);
+    return client;
+}
+
+function wireEvents(client) {
+    client.on('connect', () => {
+        console.log("connecting to redis");
+    });
+    client.on('ready', () => {
+        console.log("connected to redis");
+    });
+    client.on('error', (err) => {
+        console.log('Redis error', err);
+    });
+}
+
+const redis = createRedisClient();
+export default redis;

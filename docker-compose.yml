@@ -1,4 +1,3 @@
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -15,7 +14,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: eventsphere_redis
-    command: ["redis-server", "--appendonly", "yes"]
+    command: [ "redis-server", "--appendonly", "yes" ]
     ports:
       - "6379:6379"
     volumes:
@@ -33,10 +32,14 @@ services:
       PORT: "8000"
       FRONTEND_URL: "http://localhost:5173"
       DATABASE_URL: "postgresql://postgres:Parvati..18@postgres:5432/eventdb?schema=public"
+      # Prefer a single Redis URL when using providers like Upstash (rediss://default:PASS@HOST:6379)
+      REDIS_URL: ""
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
       REDIS_USERNAME: ""
       REDIS_PASSWORD: ""
+      # Enable TLS for host/port style when needed (e.g., Upstash)
+      REDIS_TLS: "false"
       ACCESS_TOKEN_SECRET: "dev_access_secret_change_me"
       REFRESH_TOKEN_SECRET: "dev_refresh_secret_change_me"
       ACCESS_TOKEN_EXPIRY: "15m"
