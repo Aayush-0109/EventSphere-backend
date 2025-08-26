@@ -16,4 +16,14 @@ const updateUserSchema = z.object({
     name: z.string().min(2).max(50).optional(),
     password: passwordSchema.optional()
 }).refine(data => data.name || data.password, "At least one field must be provided")
-export {registerUserSchema,loginUserSchema,updateUserSchema}
+
+const sendOtpSchema = z.object({
+    email : emailSchema
+})
+
+const verifyOtpSchema = z.object({
+    email : emailSchema,
+    otp : z.string().min(6).max(6).transform((val)=>parseInt(val))
+})
+
+export {registerUserSchema,loginUserSchema,updateUserSchema,sendOtpSchema,verifyOtpSchema}

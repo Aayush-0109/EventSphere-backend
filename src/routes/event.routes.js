@@ -21,7 +21,7 @@ import cacheMiddleware from "../middlewares/cache.middleware.js";
 const router = Router()
 router.get("/", gentleRateLimit, cacheMiddleware(300), validateQuery(getEventsQuerySchema), getEvents);
 router.get("/:id", gentleRateLimit, cacheMiddleware(300), validateParams(eventParamsSchema), getEventById);
-router.get("/search/nearby", gentleRateLimit, cacheMiddleware(300), validateQuery(geoSearchSchema), getNearbyEvents)
+router.get("/search/nearby", gentleRateLimit, validateQuery(geoSearchSchema), getNearbyEvents)
 
 // protected routes
 

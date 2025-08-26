@@ -81,10 +81,10 @@ const getEventsQuerySchema = z.object({
 })
 
 const geoSearchSchema = z.object({
-    longitude: z.number().min(-180).max(180),
-    latitude: z.number().min(-85.05112878).max(85.05112878),
-    radius: z.number().min(0.1).max(100).default(10),
-    unit: z.enum(["km", "miles"]).default("km"),
-    ...paginationSchema
+    longitude: z.string().transform((val) => parseFloat(val)),
+    latitude: z.string().transform((val) => parseFloat(val)),
+    radius: z.string().transform((val) => parseInt(val)),
+    unit: z.enum(["km", "Mi"]).default("km"),
+    ...paginationSchema.shape
 })
 export { getEventsQuerySchema, eventParamsSchema, updateEventSchema, createEventSchema, geoSearchSchema }

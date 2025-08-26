@@ -152,8 +152,19 @@ const getNearbyEvents = asyncHandler(async (req, res) => {
     const { page, limit, skip } = getPagination(req);
     const { longitude, latitude, radius, unit } = req.validatedQuery;
     const { geoEvents, total } = await geo.getNearbyEvents(longitude, latitude, radius, unit);
-    const paginatedGeoEvents = geoEvents.slice(skip, skip + limit);
+    console.log(geoEvents);
+    const structuredGeoEvents = []
+    for(let i=0;i<geoEvents.length;i+=2){
+        structuredGeoEvents.push([geoEvents[i] , geoEvents[i+1]])
+        
+    }
+    
+    const paginatedGeoEvents = structuredGeoEvents.slice(skip, skip + limit);
+  
+    
     const eventIds = paginatedGeoEvents.map((geoEvent) => (Number(geoEvent[0])))
+    
+    
     const eventsFromDB = await prisma.event.findMany({
         where: {
             id: {
@@ -175,6 +186,8 @@ const getNearbyEvents = asyncHandler(async (req, res) => {
             }
         }
     })
+ 
+    
     const eventMap = new Map(eventsFromDB.map(e => [e.id, e]));
     const events = paginatedGeoEvents.map(geoEvent => {
         const event = eventMap.get(Number(geoEvent[0]));
@@ -186,6 +199,8 @@ const getNearbyEvents = asyncHandler(async (req, res) => {
         }
         return event;
     }).filter(event => event !== null);
+    console.log(events);
+    
     return res.status(200).json(new ApiResponse(200, {
         events,
         meta: getMeta(total, page, limit)

@@ -5,14 +5,14 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import ApiResponse from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-import { email } from "zod";
+import otpService from '../services/otp.service.js'
 
 // cookie option
 const cookieOption = {
     httpOnly: true,
     secure: false,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite : 'lax'
+    sameSite: 'lax'
 }
 
 
@@ -76,7 +76,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
             publicId: image.public_id
         }
     }
-    console.log(profileImage);
+
     // create user
     const user = await prisma.user.create({
         data: {
@@ -107,7 +107,20 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
 }, "registerUser")
 
-const loginUser = asyncHandler(async (req, res, next) => {
+const sendOtp = asyncHandler(async (req, res) => {
+    const { email } = req.validatedQuery;
+    otpService.sendOtp(email);
+    res.status(200).json(new ApiResponse(201, {}, "Otp sent successfully"))
+}, "send otp")
+
+const verifyOtp = asyncHandler(async (req, res) => {
+    const { email, otp } = req.validatedQuery;
+    const success = await otpService.verifyOtp(email, otp);
+    if (!success) throw new ApiError(400, " OTP verification failed")
+    res.status(200).json(new ApiResponse(200, {}, "Otp verified successfully"))
+}, "verify otp")
+
+const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     const user = await prisma.user.findUnique({
         where: {
@@ -146,17 +159,17 @@ const loginUser = asyncHandler(async (req, res, next) => {
 }, "login User")
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    
-    const incomingRefreshToken = req.cookies?.refreshToken 
+
+    const incomingRefreshToken = req.cookies?.refreshToken
     if (!incomingRefreshToken) throw new ApiError(400, "Access token required")
     const payload = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
     const id = payload.id;
     const user = await prisma.user.findUnique({
         where: {
-            id : id
+            id: id
         },
         select: {
-            id : true,
+            id: true,
             name: true,
             email: true,
             role: true,
@@ -165,7 +178,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     })
     if (!user) throw new ApiError(404
         , "Invalid request : No user found");
-        
+
     if (user.refreshToken !== incomingRefreshToken) throw new ApiError(401, "Unauthenticated request ");
     const accessPayload = {
         id: user.id,
@@ -181,10 +194,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     const updatedUser = await prisma.user.update({
         where: {
-            id : user.id
+            id: user.id
         },
         data: {
-            refreshToken : refreshToken
+            refreshToken: refreshToken
         },
         select: {
             id: true,
@@ -198,12 +211,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 }, "refresh access token")
 
-const getUser = asyncHandler(async(req,res)=>{
+const getUser = asyncHandler(async (req, res) => {
+    console.log("inside");
+
     const user = await prisma.user.findUnique({
-        where:{
-            id : req.user.id
+        where: {
+            id: req.user.id
         },
-        select:{
+        select: {
             id: true,
             name: true,
             email: true,
@@ -212,8 +227,8 @@ const getUser = asyncHandler(async(req,res)=>{
         }
     })
     user.profileImage = user.profileImage?.url
-    res.status(200).json(new ApiResponse(200,user,"user fetched successfully"))
-},"Get user info")
+    res.status(200).json(new ApiResponse(200, user, "user fetched successfully"))
+}, "Get user info")
 
 const logOutUser = asyncHandler(async (req, res) => {
 
@@ -240,7 +255,7 @@ const updateUser = asyncHandler(async (req, res) => {
     const { name, password } = req.body;
     // if (!name && !password) throw new ApiError(400, "One or more fields are required");
     if ((name && name == user.name)) throw new ApiError(409, "Name could not be same as previous one");
-         if((password && password == user.password)) throw new ApiError(409, "Password could not be same as previous one");
+    if ((password && password == user.password)) throw new ApiError(409, "Password could not be same as previous one");
     const data = {
         ...(name && { name }),
         ...(password && {
@@ -265,4 +280,4 @@ const updateUser = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, updatedUser, "User updated successfully"));
 
 }, "Update user")
-export { registerUser, loginUser,getUser, logOutUser, updateUser, refreshAccessToken }
+export { registerUser, loginUser, getUser, logOutUser, updateUser, refreshAccessToken ,sendOtp,verifyOtp}

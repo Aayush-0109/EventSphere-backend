@@ -100,6 +100,7 @@ const deleteUser = asyncHandler(async (req, res) => {
     if (!userToDelete) {
         throw new ApiError(404, "User not found");
     }
+    if (userToDelete.role === "ADMIN") throw new ApiError(400, "You cannot delete other admin's account");
 
 
     // Delete user's profile image from Cloudinary if exists

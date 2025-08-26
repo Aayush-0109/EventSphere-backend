@@ -34,5 +34,15 @@ class Cache {
             console.log("cache error : ", error)
         }
     }
+
+    async inc(key){
+        try {
+            console.log("Increment : ",key)
+            await redis.incr(key)
+        } catch (error) {
+            console.log("cache error : ", error);
+            
+        }
+    }
 }
 export default new Cache()
