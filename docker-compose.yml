@@ -1,0 +1,58 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: eventsphere_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Parvati..18
+      POSTGRES_DB: eventdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: eventsphere_redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eventsphere_api
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      PORT: "8000"
+      FRONTEND_URL: "http://localhost:5173"
+      DATABASE_URL: "postgresql://postgres:Parvati..18@postgres:5432/eventdb?schema=public"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      REDIS_USERNAME: ""
+      REDIS_PASSWORD: ""
+      ACCESS_TOKEN_SECRET: "dev_access_secret_change_me"
+      REFRESH_TOKEN_SECRET: "dev_refresh_secret_change_me"
+      ACCESS_TOKEN_EXPIRY: "15m"
+      REFRESH_TOKEN_EXPIRY: "7d"
+      OTP_SECRET: "dev_otp_secret_change_me"
+      EMAIL_USER: "aayushsharma2647b@gmail.com"
+      EMAIL_PASS: "ktte engw dowa cdeu"
+      EMAIL_FROM: "EventSphere <aayushsharma2647b@gmail.com>"
+      SMTP_HOST: "smtp.gmail.com"
+      SMTP_PORT: "465"
+      CLOUDINARY_CLOUD_NAME: ""
+      CLOUDINARY_API_KEY: ""
+      CLOUDINARY_API_SECRET: ""
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
+  redisdata:
