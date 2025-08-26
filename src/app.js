@@ -8,7 +8,6 @@ import organizerRequestRoutes from "./routes/organizerRequest.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import { notfound, errorHandler } from "./middlewares/error.middleware.js";
 const app = express();
-// Needed for secure cookies behind proxies (Render/Heroku/etc.)
 app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

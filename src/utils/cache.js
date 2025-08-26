@@ -4,7 +4,13 @@ class Cache {
     async get(key) {
         try {
             const data = await redis.get(key);
-            return data ? JSON.parse(data) : null
+            if (!data) return null;
+            try {
+                return JSON.parse(data);
+            } catch (err) {
+                await this.del(key).catch(() => { });
+                throw err;
+            }
         } catch (error) {
             console.log("cache error : ", error)
         }
@@ -12,7 +18,7 @@ class Cache {
     async set(key, data, ttl = 300) {
         try {
             console.log(" set ", key);
-            await redis.setex(key, ttl, JSON.stringify(data));
+            await redis.set(key, JSON.stringify(data), 'EX', ttl);
         } catch (error) {
             console.log("cache error : ", error)
         }
@@ -35,13 +41,13 @@ class Cache {
         }
     }
 
-    async inc(key){
+    async inc(key) {
         try {
-            console.log("Increment : ",key)
+            console.log("Increment : ", key)
             await redis.incr(key)
         } catch (error) {
             console.log("cache error : ", error);
-            
+
         }
     }
 }
