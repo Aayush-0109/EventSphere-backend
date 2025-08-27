@@ -46,12 +46,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
     const { name, email, password } = req.body;
 
-
-
-
-
-
-
     const existingUser = await prisma.user.findUnique({
         where: {
             email: email
@@ -284,4 +278,14 @@ const updateUser = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, updatedUser, "User updated successfully"));
 
 }, "Update user")
-export { registerUser, loginUser, getUser, logOutUser, updateUser, refreshAccessToken, sendOtp, verifyOtp }
+
+const getSocketToken =asyncHandler(async (req,res)=>{
+    const payload = {
+        id : req.user?.id,
+        role : req.user?.role,
+        name : req.user?.name
+    }
+    const token = jwt.sign(payload,process.env.ACCESS_TOKEN_SECRET);
+    res.status(200).json(new ApiResponse(200,{token},"ok"));
+},"Get socket token")
+export { registerUser, loginUser, getUser, logOutUser, updateUser, refreshAccessToken, sendOtp, verifyOtp ,getSocketToken}
